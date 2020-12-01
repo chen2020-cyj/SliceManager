@@ -353,7 +353,7 @@ public class TaskController {
             return  res;
         }
     }
-//    @ApiOperation("客户端更新失败的任务") 阿达达大大
+//    @ApiOperation("客户端更新失败的任务")
 //    @PostMapping(value = "/delTask,",produces = "application/json;charset=UTF-8")
 //    public ResData delTask(@RequestBody FindOneSegment findOneSegment){
 //
