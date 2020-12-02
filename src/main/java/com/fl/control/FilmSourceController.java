@@ -107,7 +107,7 @@ public class FilmSourceController {
 
         Integer page = findAllFilmSource.getPage();
         Integer offset = page*(findAllFilmSource.getOffset()-1);
-        List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectPage(page, offset);
+        List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectPage(page-1, offset);
 
         User user = userService.selectUserInfo(findAllFilmSource.getUserId());
         Long currentTime = System.currentTimeMillis()/1000;

@@ -112,18 +112,32 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
         }
     }
     /**
-     * 根据id  更新任务表
+     * 根据filmId  更新download_state
      */
-    public void updateIdTask(Integer id,String state){
+    public void updateIdTask(String filmId,String state){
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("id",id);
+        wrapper.eq("film_id",filmId);
 
         TaskManager taskManager = taskManagerMapper.selectOne(wrapper);
         taskManager.setDownloadState(state);
 
         taskManagerMapper.update(taskManager,wrapper);
     }
+    /**
+     * 根据filmId 更新segment_state
+     */
+    public void updateIdSegmentState(String filmId,String state){
+        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
+        wrapper.eq("film_id",filmId);
 
+        TaskManager taskManager = taskManagerMapper.selectOne(wrapper);
+        if (taskManager.getSegmentState().equals("")){
+            taskManager.setSegmentState(state);
+        }else {
+            taskManager.setSegmentState(taskManager.getSegmentState()+","+state);
+        }
+        taskManagerMapper.update(taskManager,wrapper);
+    }
     /**
      * 查询任务数量
      */
@@ -174,4 +188,29 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
 
         taskManagerMapper.delete(wrapper);
     }
+    /**
+     * 更新失败的url链接
+     */
+    public String updateFailUrl(String filmId,String btUrl,String subtitleUrl){
+        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
+        wrapper.eq("film_id",filmId);
+        TaskManager taskManager = taskManagerMapper.selectOne(wrapper);
+
+        if (btUrl.equals("") && subtitleUrl.equals("")){
+            return "";
+        }else if (!btUrl.equals("") && subtitleUrl.equals("")){
+            taskManager.setBtUrl(btUrl);
+            taskManagerMapper.update(taskManager,wrapper);
+            return "success";
+        }else if (btUrl.equals("") && !subtitleUrl.equals("")){
+            taskManager.setSubtitleUrl(subtitleUrl);
+            taskManagerMapper.update(taskManager,wrapper);
+            return "success";
+        }else if (!btUrl.equals("") && !subtitleUrl.equals("")){
+            return "success";
+        }else {
+            return "";
+        }
+    }
+
 }

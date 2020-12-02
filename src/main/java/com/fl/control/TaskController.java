@@ -45,21 +45,18 @@ public class TaskController {
     private  ResAddSegment resAddSegment = new ResAddSegment();
     private  List<MinioData> listMinio = new ArrayList<>();
     private  ResFilmData resFilmData = new ResFilmData();
-    private  List<TaskState> list = new ArrayList<>();
-    private  MinioData minioData = new MinioData();
+    private  List<TaskManager> taskList = new ArrayList<>();
     private  List<DbData> listDbData = new ArrayList<>();
+    private  ResFilmData resTaskData = new ResFilmData();
     private  Msg msg = new Msg();
 
     @ApiOperation("客户端查看所有任务")
     @PostMapping(value = "/findMoreTask",produces = "application/json;charset=UTF-8")
     public String clientFindMoreTask(@RequestBody FindSegmentTask task) {
-
         Integer page = task.getPage();
         Integer offset = (task.getOffset())*task.getPage();
-        if (offset == 0){
-            offset = 0;
-        }
-        IPage<TaskManager> segmentManagerIPage = segmentService.selectSegment(page, offset);
+
+        IPage<TaskManager> segmentManagerIPage = segmentService.selectSegment(page-1, offset);
         User user = userService.selectUserInfo(task.getUserId());
         List<TaskManager> list = segmentManagerIPage.getRecords();
         System.out.println(list);
@@ -96,14 +93,15 @@ public class TaskController {
 
     }
     @ApiOperation("客户端查看单个任务")
-    @PostMapping(value = "/findOneTask,",produces = "application/json;charset=UTF-8")
+    @PostMapping(value = "/findOneTask",produces = "application/json;charset=UTF-8")
     public String findOneTask(@RequestBody FindOneSegment findOneSegment){
 
         Integer userId = JwtUtils.verify(findOneSegment.getToken());
         User user = userService.selectUserInfo(userId);
 
         TaskManager taskManager = segmentService.selectSegmentFilmOne(findOneSegment.getFilmId());
-        long currentTime = System.currentTimeMillis();
+        System.out.println(taskManager);
+        long currentTime = System.currentTimeMillis()/1000;
         long tokenTime = Long.valueOf(user.getTokenTime());
         if (tokenTime > currentTime){
             if (taskManager != null){
@@ -114,7 +112,7 @@ public class TaskController {
 
                 return GsonUtils.toJson(res);
             }else {
-                res.setCode(1);
+                res.setCode(2);
                 res.setMsg("err");
                 res.setData("");
 
@@ -123,7 +121,7 @@ public class TaskController {
 
         }else {
             res.setCode(1);
-            res.setMsg("err");
+            res.setMsg("token过期");
             res.setData("403");
 
             return GsonUtils.toJson(res);
@@ -134,6 +132,7 @@ public class TaskController {
     @ApiOperation("客户端添加任务")
     @PostMapping(value="/addFilmSource",produces = "application/json;charset=UTF-8")
     public String add(@RequestBody AddSegmentQueue queue) {
+
         String filmId = getRandomString(10);
         Integer userInfo = JwtUtils.verify(queue.getToken());
 
@@ -141,6 +140,15 @@ public class TaskController {
 
         long currentTime = System.currentTimeMillis() / 1000;
         long tokenTime = Long.valueOf(user.getTokenTime());
+        double filmSize= 0.0;
+        if (queue.getFilmSize().contains("MB")){
+            String mb = queue.getFilmSize().replace("MB", "");
+            filmSize = Double.valueOf(mb)/1024;
+
+        }else if (queue.getFilmSize().contains("GB")){
+            String gb = queue.getFilmSize().replace("GB", "");
+            filmSize = Double.valueOf(gb);
+        }
 
         String resolvingPower = queue.getResolvingPower();
         double totalSize = 0.0;
@@ -172,7 +180,8 @@ public class TaskController {
                     for (int i=0;i<minioInfos.size();i++){
                        totalSize = minioInfos.get(i).getTotalCapacity();
                        availableSize = minioInfos.get(i).getAvailableCapacity();
-                       if (queue.getFilmSize() < availableSize){
+
+                       if (filmSize < availableSize){
                            segment.setMinioId(String.valueOf(minioInfos.get(i).getId()));
 
 
@@ -180,7 +189,7 @@ public class TaskController {
                            minioInfo.setResolvingPower(queue.getResolvingPower());
                            minioInfo.setArea(minioInfos.get(i).getArea());
                            minioInfo.setTotalCapacity(totalSize);
-                           minioInfo.setAvailableCapacity(availableSize-queue.getFilmSize());
+                           minioInfo.setAvailableCapacity(availableSize-filmSize);
                            minioInfo.setMsg(minioInfos.get(i).getMsg());
                            minioInfo.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
 
@@ -219,17 +228,17 @@ public class TaskController {
                             availableSize = minio.get(0).getAvailableCapacity();
 
 
-                            if (queue.getFilmSize() < availableSize){
+                            if (filmSize < availableSize){
                                 if (MinioId.equals("")){
                                     MinioId = String.valueOf(minio.get(0).getId());
                                 }else{
                                     MinioId = MinioId+","+String.valueOf(minio.get(0).getId());
                                 }
 
-                                minioInfo.setResolvingPower(queue.getResolvingPower());
+                                minioInfo.setResolvingPower(minio.get(0).getResolvingPower());
                                 minioInfo.setArea(minio.get(0).getArea());
                                 minioInfo.setTotalCapacity(totalSize);
-                                minioInfo.setAvailableCapacity(availableSize-queue.getFilmSize());
+                                minioInfo.setAvailableCapacity(availableSize-filmSize);
                                 minioInfo.setMsg(minio.get(0).getMsg());
                                 minioInfo.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
 
@@ -246,7 +255,6 @@ public class TaskController {
                                 minio.clear();
                             }
                     }
-
                     segment.setMinioId(MinioId);
                     segment.setFilmId(getRandomString(10));
                     segment.setFilmName(queue.getFilmName());
@@ -286,7 +294,6 @@ public class TaskController {
 
             return GsonUtils.toJson(res);
         }
-
     }
 
     @ApiOperation("客户端查看状态，传入不同的状态获得不同状态的数据")
@@ -295,10 +302,8 @@ public class TaskController {
 
         Integer page = announce.getPage();
         Integer offset = (announce.getOffset())*announce.getPage();
-        if (offset == 0){
-            offset = 0;
-        }
-        IPage<TaskManager> segmentManager = segmentService.selectState(page,offset,announce.getState());
+
+        IPage<TaskManager> segmentManager = segmentService.selectState(page-1,offset,announce.getState());
         List<TaskManager> list = segmentManager.getRecords();
 
         User user = userService.selectUserInfo(announce.getUserId());
@@ -329,10 +334,9 @@ public class TaskController {
 
             return GsonUtils.toJson(res);
         }
-
     }
     @ApiOperation("客户端删除任务")
-    @PostMapping(value = "/delTask,",produces = "application/json;charset=UTF-8")
+    @PostMapping(value = "/delTask",produces = "application/json;charset=UTF-8")
     public ResData delTask(@RequestBody FindOneSegment findOneSegment){
 
         User user = userService.selectUserInfo(findOneSegment.getUserId());
@@ -353,19 +357,126 @@ public class TaskController {
             return  res;
         }
     }
-//    @ApiOperation("客户端更新失败的任务")
-//    @PostMapping(value = "/delTask,",produces = "application/json;charset=UTF-8")
-//    public ResData delTask(@RequestBody FindOneSegment findOneSegment){
-//
-//        User user = userService.selectUserInfo(findOneSegment.getUserId());
-//        long currentTime = System.currentTimeMillis()/1000;
-//        long tokenTime = Long.valueOf(user.getTokenTime());
-//        if (tokenTime > currentTime){
-//
-//        }else {
-//
-//        }
-//    }
+    @ApiOperation("客户端更新失败的任务")
+    @PostMapping(value = "/updateTask",produces = "application/json;charset=UTF-8")
+    public ResData updateTask(@RequestBody UpdateTask updateTask){
+
+        User user = userService.selectUserInfo(updateTask.getUserId());
+        long currentTime = System.currentTimeMillis()/1000;
+        long tokenTime = Long.valueOf(user.getTokenTime());
+        if (tokenTime > currentTime){
+            String s = segmentService.updateFailUrl(updateTask.getFilmId(), updateTask.getBtUrl(), updateTask.getSubtitleUrl());
+            if (s.equals("success")){
+                segmentService.updateIdTask(updateTask.getFilmId(),"0");
+
+                res.setCode(0);
+                res.setMsg("success");
+                res.setData("");
+                return res;
+            }else {
+                res.setCode(2);
+                res.setMsg("不能输入空数据");
+                res.setData("");
+                return res;
+            }
+        }else {
+            res.setCode(1);
+            res.setMsg("token过期");
+            res.setData("");
+
+            return res;
+        }
+    }
+    @ApiOperation("客户端查看切片失败的任务")
+    @PostMapping(value = "/findFailTask",produces = "application/json;charset=UTF-8")
+    public ResFilmData findFailTask(@RequestBody FindFailTask findFailTask){
+
+        User user = userService.selectUserInfo(findFailTask.getUserId());
+        long currentTime = System.currentTimeMillis()/1000;
+        long tokenTime = Long.valueOf(user.getTokenTime());
+
+        Integer page = findFailTask.getPage();
+        Integer offset = (findFailTask.getOffset())*findFailTask.getPage();
+        IPage<TaskManager> taskManagerIPage = segmentService.selectSegment(page - 1, offset);
+
+        List<TaskManager> list = taskManagerIPage.getRecords();
+        List<String> fail = new ArrayList<>();
+
+        String str = "";
+        boolean state = false;
+        if (tokenTime > currentTime){
+            for (int i=0;i<list.size();i++){
+                TaskManager task = new TaskManager();
+                String segmentState = list.get(i).getSegmentState();
+                if (!segmentState.equals("")){
+                    if (!segmentState.contains(",")){
+                        if (segmentState.equals("2021")){
+                            state = true;
+                        }else if (segmentState.equals("2022")){
+                            state = true;
+                        }else if (segmentState.equals("2023")){
+                            state = true;
+                        }else {
+
+                        }
+                        if (state == true){
+                            taskList.add(list.get(i));
+                        }
+                        state = false;
+                    }else {
+                        String[] split = segmentState.split(",");
+                        for (int j=0;j<split.length;j++){
+                            if (split[j].equals("2021")){
+                                state = true;
+                            }else if (split[j].equals("2022")){
+                                state = true;
+                            }else if (split[j].equals("2023")){
+                                state = true;
+                            }else {
+
+                            }
+                        }
+                        if (state == true){
+                            taskList.add(list.get(i));
+                        }
+                        state = false;
+                    }
+                }else {
+                    continue;
+                }
+            }
+            resTaskData.setCode(0);
+            resTaskData.setMsg("返回所有切片失败的任务");
+            resTaskData.setData(taskList);
+            resTaskData.setTotal(taskList.size());
+            return resTaskData;
+        }else {
+            resTaskData.setCode(1);
+            resTaskData.setMsg("token过期");
+            resTaskData.setData("");
+            resTaskData.setTotal(0);
+            return resTaskData;
+        }
+    }
+    @ApiOperation("客户端任务测试")
+    @PostMapping("/clientTaskTest")
+    public ResData taskTest(String str){
+
+        System.out.println(str);
+        res.setCode(0);
+        res.setMsg("success");
+        res.setData("");
+        return res;
+    }
+
+    @PostMapping("/test")
+    public ResData taskTest(@RequestBody ResData res){
+
+        System.out.println(res);
+
+        return null;
+    }
+
     public static String getRandomString(int length){
         String str="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         Random random=new Random();

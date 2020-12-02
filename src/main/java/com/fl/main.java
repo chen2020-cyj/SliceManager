@@ -16,10 +16,21 @@ import java.util.regex.Pattern;
 public class main {
 
     public static void main(String[] args) {
-     String str = "3.003";
-
-     Double.valueOf(str);
-
+//        ResData res = new ResData();
+//        ResData res2 = new ResData();
+//        res.setData("adadad");
+//        res.setMsg("比你好");
+//        res.setCode(0);
+//        List<ResData> list = new ArrayList<>();
+//
+//        list.add(res);
+//
+//        res2 = list.get(0);
+//        res2.setData("帅帅");
+//        System.out.println(res2);
+        String str = "784.75MB";
+        String mb = str.replace("MB", "");
+        System.out.println(mb);
     }
 
 

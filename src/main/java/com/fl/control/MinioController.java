@@ -7,6 +7,7 @@ import com.fl.model.Msg;
 import com.fl.model.clientReq.AddMinio;
 import com.fl.model.clientReq.FindAllMinio;
 import com.fl.model.clientRes.ResData;
+import com.fl.model.clientRes.ResFilmData;
 import com.fl.model.clientRes.ResMinio;
 import com.fl.service.MinioInfoService;
 import com.fl.service.UserService;
@@ -36,6 +37,7 @@ public class MinioController {
     private ResData res = new ResData();
     private List<MinioInfo> listMinioInfo = new ArrayList<>();
     private ResMinio resMinio = new ResMinio();
+    private ResFilmData resMinioData = new ResFilmData();
     private Msg msg = new Msg();
     @ApiOperation("添加一个存储桶")
     @PostMapping(value = "/addMinio",produces = "application/json;charset=UTF-8")
@@ -92,21 +94,22 @@ public class MinioController {
 
         if (user != null){
             if (tokenTime > currentTime){
-                IPage<MinioInfo> minioInfoIPage = minioInfoService.selectAllMinio(findAllMinio.getResolvingPower(), page, offset);
+                IPage<MinioInfo> minioInfoIPage = minioInfoService.selectAllMinio(findAllMinio.getResolvingPower(), page-1, offset);
                 listMinioInfo = minioInfoIPage.getRecords();
                 resMinio.setList(listMinioInfo);
                 resMinio.setTotal(minioInfoService.selectCount());
 
 
-                res.setCode(0);
-                res.setMsg("success");
-                res.setData(resMinio);
+                resMinioData.setCode(0);
+                resMinioData.setMsg("success");
+                resMinioData.setData(listMinioInfo);
+                resMinioData.setTotal(minioInfoService.selectCount());
 
                 return GsonUtils.toJson(res);
 
             }else {
                 res.setCode(1);
-                res.setMsg("err");
+                res.setMsg("token过期");
                 res.setData("403");
 
                 return GsonUtils.toJson(res);
