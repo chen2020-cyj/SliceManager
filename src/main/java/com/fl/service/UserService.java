@@ -25,7 +25,13 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         User user = userMapper.selectOne(wrapper);
         return user;
     }
+    public User selectByUser(String username){
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("username",username);
 
+        return userMapper.selectOne(wrapper);
+
+    }
     public void register(User user) {
         user.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
         userMapper.insert(user);
@@ -35,7 +41,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("username",user.getUsername());
 
-        userMapper.update(user, queryWrapper);
+        int update = userMapper.update(user, queryWrapper);
 
     }
 
@@ -52,5 +58,12 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         wrapper.eq("''","");
 
         return  userMapper.selectList(wrapper);
+    }
+
+    public User getUserByToken(String token){
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("token",token);
+
+        return  userMapper.selectOne(wrapper);
     }
 }

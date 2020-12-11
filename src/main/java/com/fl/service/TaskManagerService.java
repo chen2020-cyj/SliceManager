@@ -37,7 +37,13 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
 
         return taskManagerMapper.selectPage(page1, wrapper);
     }
+    public Integer selectTaskCount(){
+        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
+        wrapper.eq("''","");
 
+
+        return taskManagerMapper.selectCount(wrapper);
+    }
     /**
      * 添加新任务
      * @param segment
@@ -52,7 +58,7 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
      * @param map
      * @return
      */
-    public List<TaskManager> selectSegmentOne(Map<String,String> map){
+    public List<TaskManager> selectSegmentList(Map<String,String> map){
 
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
         wrapper.allEq(map);
@@ -124,6 +130,21 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
         taskManagerMapper.update(taskManager,wrapper);
     }
     /**
+     * 根据filmId 更新link_state
+     */
+    public void updateIdLinkState(String filmId,String state){
+        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
+        wrapper.eq("film_id",filmId);
+
+        TaskManager taskManager = taskManagerMapper.selectOne(wrapper);
+        if (taskManager.getLinkState().equals("")){
+            taskManager.setLinkState(state);
+        }else {
+            taskManager.setLinkState(taskManager.getLinkState()+","+state);
+        }
+        taskManagerMapper.update(taskManager,wrapper);
+    }
+    /**
      * 根据filmId 更新segment_state
      */
     public void updateIdSegmentState(String filmId,String state){
@@ -131,11 +152,16 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
         wrapper.eq("film_id",filmId);
 
         TaskManager taskManager = taskManagerMapper.selectOne(wrapper);
-        if (taskManager.getSegmentState().equals("")){
-            taskManager.setSegmentState(state);
-        }else {
-            taskManager.setSegmentState(taskManager.getSegmentState()+","+state);
-        }
+        taskManager.setSegmentState(state);
+        taskManagerMapper.update(taskManager,wrapper);
+    }
+    /**
+     * 根据filmId 更新upload_state
+     */
+    public void updateUploadState(String filmId,TaskManager taskManager){
+        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
+        wrapper.eq("film_id",filmId);
+
         taskManagerMapper.update(taskManager,wrapper);
     }
     /**
@@ -182,11 +208,12 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
     /**
      * 根据filmId删除
      */
-    public void delTask(String filmId){
+    public TaskManager delTask(String filmId){
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
         wrapper.eq("film_id",filmId);
 
         taskManagerMapper.delete(wrapper);
+        return taskManagerMapper.selectOne(wrapper);
     }
     /**
      * 更新失败的url链接
@@ -200,6 +227,7 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
             return "";
         }else if (!btUrl.equals("") && subtitleUrl.equals("")){
             taskManager.setBtUrl(btUrl);
+            System.out.println(taskManager);
             taskManagerMapper.update(taskManager,wrapper);
             return "success";
         }else if (btUrl.equals("") && !subtitleUrl.equals("")){
@@ -207,6 +235,9 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
             taskManagerMapper.update(taskManager,wrapper);
             return "success";
         }else if (!btUrl.equals("") && !subtitleUrl.equals("")){
+            taskManager.setSubtitleUrl(subtitleUrl);
+            taskManager.setBtUrl(btUrl);
+            taskManagerMapper.update(taskManager,wrapper);
             return "success";
         }else {
             return "";

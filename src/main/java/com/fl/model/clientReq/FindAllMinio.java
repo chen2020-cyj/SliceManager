@@ -4,9 +4,9 @@ import lombok.Data;
 
 @Data
 public class FindAllMinio {
-    private String token;
-
-    private Integer userId;
+//    private String token;
+//
+//    private Integer userId;
 
     private Integer offset;
 

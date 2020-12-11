@@ -15,7 +15,7 @@ public class MinioInfo {
     /**
      * msg:json消息体，内容为地址，桶用户，桶密码
      */
-    private String msg;
+    private Object msg;
     /**
      * 该桶总容量
      */

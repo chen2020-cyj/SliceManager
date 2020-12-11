@@ -39,7 +39,7 @@ import static springfox.documentation.schema.AlternateTypeRules.newRule;
 public class SwaggerConfig {
 
 
-    private String tokenHeader = "lahfkjhfkjafiuhfkjbf";
+    private String tokenHeader = "token";
 
 
     @Value("${swagger.enabled}")

@@ -7,7 +7,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class SilceManagerApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(SilceManagerApplication.class, args);
+        try {
+            SpringApplication.run(SilceManagerApplication.class, args);
+            System.setProperty("spring.devtools.restart.enabled", "false");
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
     }
 
 }
+
+

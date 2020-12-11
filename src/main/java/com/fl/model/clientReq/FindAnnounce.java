@@ -9,8 +9,8 @@ public class FindAnnounce {
     private Integer page;
 
     private String state;
-
-    private String token;
-
-    private Integer userId;
+//
+//    private String token;
+//
+//    private Integer userId;
 }

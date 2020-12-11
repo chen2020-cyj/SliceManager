@@ -9,12 +9,7 @@ import java.util.List;
 
 @Data
 
-public class UserInfoTest {
-    private Integer id;
-
-    private String introduction;
-
-    private String avatar;
+public class Roles {
 
     private String name;
 

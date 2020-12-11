@@ -3,6 +3,13 @@ server:
   servlet:
     context-path: /deal
 
+http_pool:
+  max_total: 200
+  default_max_per_route: 100
+  connect_timeout: 5000
+  connection_request_timeout: 1000
+  socket_timeout: 65000
+  validate_after_inactivity: 2000
 #\u6570\u636E\u5E93\u914D\u7F6E
 spring:
   datasource:

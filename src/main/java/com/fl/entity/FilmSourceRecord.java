@@ -15,13 +15,9 @@ public class FilmSourceRecord {
      */
     private String filmId;
     /**
-     * minio 对应存储桶id
-     */
-    private String minioUrl;
-    /**
      *对应电影信息表
      */
-    private Integer film_info_id;
+    private Integer filmInfoId;
     /**
      * 对应电影名称
      */
@@ -39,7 +35,17 @@ public class FilmSourceRecord {
      */
     private String resolvingPower;
     /**
+     * 对应存储路径表
+     */
+    private String visitId;
+    /**
+     * 对应语言表
+     */
+    private String languageId;
+    /**
      * 创建时间
      */
     private String createTime;
+
+    private String updateTime;
 }

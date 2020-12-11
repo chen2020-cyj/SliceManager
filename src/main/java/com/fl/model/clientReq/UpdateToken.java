@@ -7,7 +7,5 @@ public class UpdateToken {
 
     private Integer userId;
 
-    private String username;
-
     private String token;
 }

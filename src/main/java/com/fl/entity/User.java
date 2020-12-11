@@ -18,7 +18,13 @@ public class User {
 
     private String token;
 
+    private String name;
+
+    private Integer groupId;
+
     private String tokenTime;
 
     private String createTime;
+
+    private String updateTime;
 }

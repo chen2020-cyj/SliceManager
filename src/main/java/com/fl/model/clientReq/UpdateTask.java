@@ -10,7 +10,7 @@ public class UpdateTask {
 
     private String subtitleUrl;
 
-    private String token;
-
-    private Integer userId;
+//    private String token;
+//
+//    private Integer userId;
 }

@@ -3,6 +3,7 @@ package com.fl.control;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fl.entity.MinioInfo;
 import com.fl.entity.User;
+import com.fl.model.MinioData;
 import com.fl.model.Msg;
 import com.fl.model.clientReq.AddMinio;
 import com.fl.model.clientReq.FindAllMinio;
@@ -12,6 +13,8 @@ import com.fl.model.clientRes.ResMinio;
 import com.fl.service.MinioInfoService;
 import com.fl.service.UserService;
 import com.fl.utils.GsonUtils;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,7 +38,7 @@ public class MinioController {
 
     private MinioInfo minioInfo = new MinioInfo();
     private ResData res = new ResData();
-    private List<MinioInfo> listMinioInfo = new ArrayList<>();
+
     private ResMinio resMinio = new ResMinio();
     private ResFilmData resMinioData = new ResFilmData();
     private Msg msg = new Msg();
@@ -43,40 +46,28 @@ public class MinioController {
     @PostMapping(value = "/addMinio",produces = "application/json;charset=UTF-8")
     public String addMinio(@RequestBody AddMinio addMinio){
 
-        User user = userService.selectUserInfo(addMinio.getUserId());
-        long currentTime = System.currentTimeMillis()/1000;
-        long tokenTime = Long.valueOf(user.getTokenTime());
+//        User user = userService.selectUserInfo(addMinio.getUserId());
+//        long currentTime = System.currentTimeMillis()/1000;
+//        long tokenTime = Long.valueOf(user.getTokenTime());
         msg.setMsg(addMinio.getData());
-        if (user != null){
-            if (tokenTime > currentTime){
+
+
+
                 minioInfo.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
                 minioInfo.setResolvingPower(addMinio.getResolvingPower());
                 minioInfo.setMsg(GsonUtils.toJson(msg));
                 minioInfo.setTotalCapacity(addMinio.getTotalCapacity());
                 minioInfo.setArea(addMinio.getArea());
+                minioInfo.setAvailableCapacity(addMinio.getAvailableCapacity());
 
                 minioInfoService.insertMinio(minioInfo);
 
-                res.setCode(0);
-                res.setMsg("success");
-                res.setData("");
+                resMinioData.setCode(0);
+                resMinioData.setMsg("success");
+                resMinioData.setData(minioInfo);
+                resMinioData.setTotal(minioInfoService.selectCount(addMinio.getResolvingPower()));
 
-                return GsonUtils.toJson(res);
-
-            }else {
-                res.setCode(1);
-                res.setMsg("err");
-                res.setData("");
-
-                return GsonUtils.toJson(res);
-            }
-        }else {
-            res.setCode(1);
-            res.setMsg("err");
-            res.setData("");
-
-            return GsonUtils.toJson(res);
-        }
+                return GsonUtils.toJson(resMinioData);
 
     }
 
@@ -87,39 +78,38 @@ public class MinioController {
 
         Integer page = findAllMinio.getPage();
         Integer offset = findAllMinio.getOffset()*page;
-        User user = userService.selectUserInfo(findAllMinio.getUserId());
+//        User user = userService.selectUserInfo(findAllMinio.getUserId());
 
-        long currentTime = System.currentTimeMillis()/1000;
-        long tokenTime = Long.valueOf(user.getTokenTime());
+        List<MinioInfo> listMinioInfo = new ArrayList<>();
 
-        if (user != null){
-            if (tokenTime > currentTime){
+
+
                 IPage<MinioInfo> minioInfoIPage = minioInfoService.selectAllMinio(findAllMinio.getResolvingPower(), page-1, offset);
                 listMinioInfo = minioInfoIPage.getRecords();
+
+                for (int i=0;i<listMinioInfo.size();i++) {
+                    Gson gson = new Gson();
+                    System.out.println(listMinioInfo.get(i).getMsg());
+                    Msg da = gson.fromJson(String.valueOf(listMinioInfo.get(i).getMsg()), Msg.class);
+
+                    List<MinioData> list = gson.fromJson(String.valueOf(da.getMsg()), new TypeToken<List<MinioData>>() {
+                    }.getType());
+
+
+                    listMinioInfo.get(i).setMsg(list);
+
+                }
+
                 resMinio.setList(listMinioInfo);
-                resMinio.setTotal(minioInfoService.selectCount());
+                resMinio.setTotal(minioInfoService.selectCount(findAllMinio.getResolvingPower()));
 
 
                 resMinioData.setCode(0);
                 resMinioData.setMsg("success");
                 resMinioData.setData(listMinioInfo);
-                resMinioData.setTotal(minioInfoService.selectCount());
+                resMinioData.setTotal(resMinio.getTotal());
 
-                return GsonUtils.toJson(res);
+                return GsonUtils.toJson(resMinioData);
 
-            }else {
-                res.setCode(1);
-                res.setMsg("token过期");
-                res.setData("403");
-
-                return GsonUtils.toJson(res);
-            }
-        }else {
-            res.setCode(1);
-            res.setMsg("err");
-            res.setData("");
-
-            return GsonUtils.toJson(res);
-        }
     }
 }

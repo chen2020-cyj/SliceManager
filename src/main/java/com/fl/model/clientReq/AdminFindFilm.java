@@ -7,7 +7,7 @@ import lombok.Data;
 public class AdminFindFilm {
     private String filmId;
 
-    private String token;
-
-    private Integer userId;
+//    private String token;
+//
+//    private Integer userId;
 }

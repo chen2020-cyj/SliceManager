@@ -29,7 +29,7 @@ public class TaskManager {
     /**
      * 上传状态
      */
-    private String uploadState;
+    private Object uploadState;
     /**
      * 链接是否有效
      */
@@ -41,7 +41,7 @@ public class TaskManager {
     /**
      * 切片状态
      */
-    private String segmentState;
+    private Object segmentState;
     /**
      * 字幕文件地址
      */
@@ -51,6 +51,22 @@ public class TaskManager {
      */
     private String subtitleSuffix;
     /**
+     * 电影大小
+     */
+    private String filmSize;
+    /**
+     * 放入到存储桶路径
+     */
+    private String minioUrl;
+    /**
+     * 对应语言表id
+     */
+    private String languageId;
+    /**
+     * 是否需要爬虫
+     */
+    private String doubanId;
+    /**
      * 分辨率
      */
     private String resolvingPower;
@@ -58,4 +74,8 @@ public class TaskManager {
      * 创建时间
      */
     private String createTime;
+    /**
+     * 更新时间
+     */
+    private String updateTime;
 }

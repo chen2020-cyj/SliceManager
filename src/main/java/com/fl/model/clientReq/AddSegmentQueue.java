@@ -17,6 +17,8 @@ public class AddSegmentQueue {
 
     private String subtitleSuffix;
 
+    private String language;
+
     private String token;
 
     private Integer userId;

@@ -1,37 +1,48 @@
 package com.fl;
-
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
-import com.fl.model.Msg;
+import com.fl.entity.FilmSourceRecord;
+import com.fl.model.*;
 import com.fl.model.clientRes.ResData;
 import com.fl.model.clientRes.ResToken;
-import com.fl.utils.GsonUtils;
-import net.sf.json.JSONArray;
 
+import com.fl.service.FilmSourceService;
+import com.fl.utils.*;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import net.sf.json.JSONArray;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class main {
+    private static String mess;
 
     public static void main(String[] args) {
-//        ResData res = new ResData();
-//        ResData res2 = new ResData();
-//        res.setData("adadad");
-//        res.setMsg("比你好");
-//        res.setCode(0);
-//        List<ResData> list = new ArrayList<>();
+//        String str = "[{\"resolving\":\"720\",\"url\":\"https://www.cnblogs.com/lovechengyu/p/8032039.html\"},{\"resolving\":\"480\",\"url\":\"https://www.cnblogs.com/lovechengyu/p/8032039.html\"},{\"resolving\":\"320\",\"url\":\"https://www.cnblogs.com/lovechengyu/p/8032039.html\"}]\n";
 //
-//        list.add(res);
+//        Gson gson = new Gson();
 //
-//        res2 = list.get(0);
-//        res2.setData("帅帅");
-//        System.out.println(res2);
-        String str = "784.75MB";
-        String mb = str.replace("MB", "");
-        System.out.println(mb);
-    }
+//        List<UploadUrl> list = gson.fromJson(str, new TypeToken<List<UploadUrl>>() {
+//        }.getType());
+//
+//        System.out.println(list);
 
+        String url = "D:\\uploadImage\\JvbLDPyohM.jpg";
+        File file = new File(url);
+
+        System.out.println(file.exists());
+        MinioPicUpLoad minioPicUpLoad = new MinioPicUpLoad();
+        minioPicUpLoad.push("test-upload","800000001","jpg",url);
+    }
 
 }

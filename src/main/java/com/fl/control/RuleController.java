@@ -1,13 +1,17 @@
 package com.fl.control;
 
 
-import com.fl.entity.TestUserInfo;
+import com.fl.entity.Rule;
+import com.fl.entity.User;
+import com.fl.model.clientReq.TestUserInfo;
 import com.fl.model.clientRes.ResData;
-import com.fl.model.clientReq.UserInfoTest;
-import com.fl.service.TestUserInfoService;
+import com.fl.model.clientReq.Roles;
+import com.fl.service.RuleUserInfoService;
+import com.fl.service.UserService;
 import com.fl.utils.GsonUtils;
 import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,33 +21,35 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Api(tags = "测试接口")
+@Api(tags = "权限接口")
 @RestController
-public class TestController {
+public class RuleController {
 
     @Autowired
-    TestUserInfoService userInfoService;
+    RuleUserInfoService ruleUserInfoService;
+    @Autowired
+    UserService userService;
+
 
     private static Map<String,String> map = new HashMap<>();
     private static ResData res = new ResData();
     @PostMapping("/getInfo")
-    public String getInfo(@RequestBody com.fl.model.clientReq.TestUserInfo testUserInfo){
-        TestUserInfo userInfo = userInfoService.selectUser(testUserInfo.getId());
-        UserInfoTest info = new UserInfoTest();
+    public ResData getInfo(@RequestBody TestUserInfo testUserInfo){
 
+        User user = userService.selectUserInfo(testUserInfo.getId());
+        Roles info = new Roles();
+        Rule rule = ruleUserInfoService.selectUser(user.getGroupId());
         List<String> list = new ArrayList<>();
-        list.add(userInfo.getRoles());
 
-        info.setAvatar(userInfo.getAvatar());
-        info.setId(userInfo.getId());
-        info.setIntroduction(userInfo.getIntroduction());
-        info.setName(userInfo.getName());
+        list.add(rule.getRoles());
+
+        info.setName(user.getName());
         info.setRoles(list);
-        res.setCode(20000);
+        res.setCode(0);
         res.setMsg("success");
         res.setData(info);
 
-        return GsonUtils.toJson(res);
+        return res;
     }
 
 //    @PostMapping("/testLogin")

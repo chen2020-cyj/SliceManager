@@ -60,6 +60,7 @@ public class JwtUtils {
             Integer userId = jwt.getClaim("userId").asInt();
             return userId;
         } catch (Exception e){
+//            e.printStackTrace();
             return 0;
         }
     }

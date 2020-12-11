@@ -33,7 +33,10 @@ public class ResSegmentManager {
      * 分辨率
      */
     private String resolvingPower;
-
+    /**
+     * 电影大小GB
+     */
+    private String filmSize;
     /**
      * 桶消息体的  map
      * key ：分辨率名称

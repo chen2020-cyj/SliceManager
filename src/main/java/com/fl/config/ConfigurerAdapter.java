@@ -29,7 +29,6 @@ public class ConfigurerAdapter implements WebMvcConfigurer {
         return new CorsFilter(source);
     }
 
-
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
 

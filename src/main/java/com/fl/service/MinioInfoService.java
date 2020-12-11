@@ -42,9 +42,9 @@ public class MinioInfoService extends ServiceImpl<MinioInfoMapper, MinioInfo> {
         return  minioInfoMapper.selectList(wrapper);
     }
 
-    public void updateMinio(MinioInfo minioInfo, String resolvingPower){
+    public void updateMinio(MinioInfo minioInfo, Integer id){
         QueryWrapper<MinioInfo> wrapper = new QueryWrapper<>();
-        wrapper.eq("resolving_power",resolvingPower);
+        wrapper.eq("id",id);
 
         minioInfoMapper.update(minioInfo,wrapper);
     }
@@ -70,10 +70,10 @@ public class MinioInfoService extends ServiceImpl<MinioInfoMapper, MinioInfo> {
     /**
      * 查询总数
      */
-    public Integer selectCount(){
+    public Integer selectCount(String resolvingPower){
 
         QueryWrapper<MinioInfo> wrapper = new QueryWrapper<>();
-        wrapper.eq("''","");
+        wrapper.eq("resolving_power",resolvingPower);
 
         return minioInfoMapper.selectCount(wrapper);
     }

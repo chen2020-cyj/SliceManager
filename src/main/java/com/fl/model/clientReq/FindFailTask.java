@@ -8,7 +8,7 @@ public class FindFailTask {
 
     private Integer page;
 
-    private String token;
-
-    private Integer userId;
+//    private String token;
+//
+//    private Integer userId;
 }

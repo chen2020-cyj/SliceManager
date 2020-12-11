@@ -9,7 +9,7 @@ public class ResFilmSourceInfo {
 
     private String filmId;
 
-    private String minioUrl;
+    private Object minioUrl;
 
     private String resolvingPower;
 }

@@ -3,7 +3,7 @@ package com.fl.model;
 import lombok.Data;
 
 @Data
-public class SegmentUpload {
+public class SegmentUploadState {
     private String segmentUploadComplete;
 
     private String segmentUpload;
