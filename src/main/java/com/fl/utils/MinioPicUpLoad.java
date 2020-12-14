@@ -27,7 +27,8 @@ public class MinioPicUpLoad {
         }
     }
 
-    public static void push(String packageName, String fileName , String suffix, String fileUrl) {
+    public String push(String packageName, String fileName, String suffix, String fileUrl) {
+        String path = "";
         try {
             boolean isExist = minioclient.bucketExists(packageName);
             if (isExist) {
@@ -40,37 +41,17 @@ public class MinioPicUpLoad {
         }
         try {
             minioclient.putObject(packageName, fileName + "." + suffix, fileUrl);
-        } catch (InvalidBucketNameException e) {
+            path = END_POINT+"/"+packageName+"/"+fileName+"."+suffix;
+            log.info(fileUrl + fileName + "." + suffix + "插入成功");
+
+            return path;
+        } catch (Exception e) {
             log.error(e.getMessage());
-            // e.printStackTrace();
-        } catch (NoSuchAlgorithmException e) {
-            log.error(e.getMessage());
-            //  e.printStackTrace();
-        } catch (InsufficientDataException e) {
-            log.error(e.getMessage());
-            // e.printStackTrace();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-            // e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            log.error(e.getMessage());
-            // e.printStackTrace();
-        } catch (NoResponseException e) {
-            log.error(e.getMessage());
-            //  e.printStackTrace();
-        } catch (XmlPullParserException e) {
-            log.error(e.getMessage());
-            // e.printStackTrace();
-        } catch (ErrorResponseException e) {
-            log.error(e.getMessage());
-            //  e.printStackTrace();
-        } catch (InternalException e) {
-            log.error(e.getMessage());
-            // e.printStackTrace();
-        } catch (InvalidArgumentException e) {
-            log.error(e.getMessage());
-            // e.printStackTrace();
+           return "";
+        } finally {
+            return path;
         }
-        log.info(fileUrl + fileName + "." + suffix + "插入成功");
+//        log.info(fileUrl + fileName + "." + suffix + "插入成功");
+//        return path;
     }
 }

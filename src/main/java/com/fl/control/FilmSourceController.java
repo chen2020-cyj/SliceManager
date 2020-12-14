@@ -1,14 +1,8 @@
 package com.fl.control;
 
-import com.fl.entity.FilmSourceRecord;
-import com.fl.entity.LanguageInfo;
-import com.fl.entity.User;
-import com.fl.entity.VisitUrl;
+import com.fl.entity.*;
 import com.fl.model.UploadUrl;
-import com.fl.model.clientReq.AdminFindFilm;
-import com.fl.model.clientReq.FindAllFilmSource;
-import com.fl.model.clientReq.FindFilmSource;
-import com.fl.model.clientReq.SelectFilmReq;
+import com.fl.model.clientReq.*;
 import com.fl.model.clientRes.*;
 import com.fl.service.FilmSourceService;
 import com.fl.service.LanguageInfoService;
@@ -33,8 +27,6 @@ public class FilmSourceController {
 
     @Autowired
     private FilmSourceService filmSourceService;
-    @Autowired
-    private UserService userService;
     @Autowired
     private VisitService visitService;
     @Autowired
@@ -116,9 +108,9 @@ public class FilmSourceController {
     @PostMapping(value = "/selectAllFilm",produces = "application/json;charset=UTF-8")
     public ResFilmData selectAllFilm(@RequestBody FindAllFilmSource findAllFilmSource){
 
-        Integer page = findAllFilmSource.getPage();
+        Integer page = (findAllFilmSource.getPage()-1)*findAllFilmSource.getOffset();
         Integer offset = findAllFilmSource.getOffset();
-        List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectPage(page-1, offset);
+        List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectPage(page, offset);
 //
 //        User user = userService.selectUserInfo(findAllFilmSource.getUserId());
 //        Long currentTime = System.currentTimeMillis()/1000;
@@ -161,10 +153,38 @@ public class FilmSourceController {
         resFilmSource.setFilmName(FilmSourceRecord.getFilmName());
         resFilmSource.setId(FilmSourceRecord.getId());
 //                resFilmSource.setLanguageId(filmSourceRecords.get(i).getLanguageId());
+//        resFilmSource
         resFilmSource.setResolvingPower(FilmSourceRecord.getResolvingPower());
         resFilmSource.setSubtitleUrl(FilmSourceRecord.getSubtitleUrl());
         resFilmSource.setUpdateTime(FilmSourceRecord.getUpdateTime());
 
         return resFilmSource;
     }
+    @ApiOperation("根据电影信息id查找片源信息")
+    @PostMapping(value = "/selectByFilmInfoId", produces = "application/json;charset=UTF-8")
+    public ResFilmData selectByFilmInfoId(@RequestBody FindFilmInfoById findFilmInfoById) {
+
+        FilmSourceRecord filmSourceRecord = filmSourceService.selectByFilmInfoId(findFilmInfoById.getFilmInfoId());
+
+        LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(filmSourceRecord.getLanguageId()));
+
+        VisitUrl visitUrl = visitService.selectByFilmId(filmSourceRecord.getFilmId());
+
+        String minioUrl = visitUrl.getMinioUrl();
+        List<UploadUrl> list = gson.fromJson(minioUrl, new TypeToken<List<UploadUrl>>() {
+        }.getType());
+//        System.out.println(languageInfo);
+
+        ResFilmSource resFilmSource = filmSource(filmSourceRecord);
+        resFilmSource.setMinioUrl(list);
+        resFilmSource.setLanguage(languageInfo.getLanguage());
+        resFilmData.setCode(0);
+        resFilmData.setMsg("success");
+        resFilmData.setData(resFilmSource);
+        resFilmData.setTotal(1);
+
+        return resFilmData;
+
+    }
+
 }

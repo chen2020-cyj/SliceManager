@@ -4,6 +4,7 @@ import com.fl.entity.FilmInfo;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+
 @Data
 public class UpdateInfo {
     /**
@@ -11,17 +12,18 @@ public class UpdateInfo {
      */
     private Integer filmInfoId;
 
-    private String filmChineseName;
+    private String chineseName;
 
-    private String filmEnglishName;
+    private String englishName;
     /**
      * 电影简介
      */
-    private String introduction;
+    private String description;
 
-    private String imageUrl;
+    private String filmCoverImage;
 
     private String tag;
 
+    private MultipartFile file;
 //    private String film
 }

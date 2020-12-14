@@ -44,5 +44,10 @@ public class FilmSourceService extends ServiceImpl<FilmSourceMapper, FilmSourceR
         wrapper.eq("''","");
         return filmSourceMapper.selectCount(wrapper);
     }
+    public FilmSourceRecord selectByFilmInfoId(Integer id){
+        QueryWrapper<FilmSourceRecord> wrapper = new QueryWrapper<>();
+        wrapper.eq("film_info_id",id);
 
+        return filmSourceMapper.selectOne(wrapper);
+    }
 }

@@ -28,7 +28,6 @@ public class ResSegmentManager {
      * 字幕文件后缀
      */
     private String subtitleSuffix;
-
     /**
      * 分辨率
      */
@@ -37,6 +36,10 @@ public class ResSegmentManager {
      * 电影大小GB
      */
     private String filmSize;
+    /**
+     * doubanId
+     */
+    private String doubanId;
     /**
      * 桶消息体的  map
      * key ：分辨率名称

@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 @Api(tags = "用户登陆注册接口")
 @RestController
@@ -165,11 +166,11 @@ public class LoginController {
 //        User user = userService.selectUserInfo(reqAllRoles.getUserId());  @RequestBody ReqAllRoles reqAllRoles
 //        long currentTime = System.currentTimeMillis()/1000;
 //        long tokenTime = Long.valueOf(user.getTokenTime());
-        Rule rule = ruleUserInfoService.selectByRoles();
+        List<Rule> rules = ruleUserInfoService.selectByRoles();
 
             res.setCode(0);
             res.setMsg("success");
-            res.setData(rule);
+            res.setData(rules);
 
             return res;
 

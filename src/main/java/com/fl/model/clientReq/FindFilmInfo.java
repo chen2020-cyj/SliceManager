@@ -4,15 +4,14 @@ import lombok.Data;
 
 @Data
 public class FindFilmInfo {
-    private String token;
-
-    private Integer userId;
 
     private String area;
 
-    private Integer year;
+    private String year;
 
-    private String filmName;
+    private String tag;
+
+    private Integer categoryId;
 
     private Integer page;
 

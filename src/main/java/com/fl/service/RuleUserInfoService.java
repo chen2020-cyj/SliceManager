@@ -7,6 +7,8 @@ import com.fl.mapper.RuleUserInfoMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RuleUserInfoService extends ServiceImpl<RuleUserInfoMapper, Rule> {
     @Autowired
@@ -26,11 +28,11 @@ public class RuleUserInfoService extends ServiceImpl<RuleUserInfoMapper, Rule> {
 
         return ruleUserInfoMapper.selectOne(wrapper);
     }
-    public Rule selectByRoles(){
+    public List<Rule> selectByRoles(){
 
         QueryWrapper<Rule> wrapper = new QueryWrapper<>();
         wrapper.eq("''","");
 
-        return ruleUserInfoMapper.selectOne(wrapper);
+        return ruleUserInfoMapper.selectList(wrapper);
     }
 }

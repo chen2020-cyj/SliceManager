@@ -51,10 +51,10 @@ public class TaskController {
     @ApiOperation("客户端查看所有任务")
     @PostMapping(value = "/findMoreTask",produces = "application/json;charset=UTF-8")
     public String clientFindMoreTask(@RequestBody FindSegmentTask task) {
-        Integer page = task.getPage();
+        Integer page = (task.getPage()-1)*task.getOffset();
         Integer offset = task.getOffset();
 
-        IPage<TaskManager> segmentManagerIPage = segmentService.selectSegment(page-1, offset);
+        IPage<TaskManager> segmentManagerIPage = segmentService.selectSegment(page, offset);
 //        User user = userService.selectUserInfo(Integer.valueOf(task.getUserId()));
         List<TaskManager> list = segmentManagerIPage.getRecords();
 //
@@ -144,21 +144,23 @@ public class TaskController {
         String filmId = getRandomString(10);
         Integer userInfo = JwtUtils.verify(queue.getToken());
         Map<String,String> map = new HashMap<>();
-        User user = userService.selectUserInfo(Integer.valueOf(queue.getUserId()));
+//        User user = userService.selectUserInfo(Integer.valueOf(queue.getUserId()));
 
         LanguageInfo languageInfo1 = languageInfoService.selectByLanguage(queue.getLanguage());
 
-        long currentTime = System.currentTimeMillis() / 1000;
-        long tokenTime = Long.valueOf(user.getTokenTime());
+//        long currentTime = System.currentTimeMillis() / 1000;
+//        long tokenTime = Long.valueOf(user.getTokenTime());
 
 
+            Map<String,String> filmMap = new HashMap<>();
+            filmMap.put("filnName",queue.getFilmName());
+            filmMap.put("language_id",String.valueOf(languageInfo1.getId()));
+            FilmInfo filmInfo = filmInfoService.selectByNameAndLanguage(filmMap);
+//            List<FilmInfo> filmInfoList = new ArrayList<>();
+//            filmInfoList = infoIPage.getRecords();
 
-            IPage<FilmInfo> infoIPage = filmInfoService.selectByFilmName(queue.getFilmName());
-            List<FilmInfo> filmInfoList = new ArrayList<>();
-            filmInfoList = infoIPage.getRecords();
 
-
-            if (filmInfoList.size()>0){
+            if (filmInfo != null){
                 segment.setDoubanId("");
             }else {
                 List<Subject> film = OkHttpUtils.getFilm(queue.getFilmName());
@@ -339,6 +341,7 @@ public class TaskController {
         segment.setFilmSize(String.valueOf(filmSize));
         segment.setSubtitleSuffix(queue.getSubtitleSuffix());
         segment.setLanguageId(languageId);
+//        segment.setDoubanId("");
         return segment;
     }
 
@@ -349,10 +352,9 @@ public class TaskController {
     @PostMapping(value = "/findQueueAnnounceState",produces = "application/json;charset=UTF-8")
     public String findQueueState(@RequestBody FindAnnounce announce){
 
-        Integer page = announce.getPage();
-        Integer offset = (announce.getOffset())*announce.getPage();
-
-        IPage<TaskManager> segmentManager = segmentService.selectState(page-1,offset,announce.getState());
+        Integer page = (announce.getPage()-1)*announce.getOffset();
+        Integer offset = announce.getOffset();
+        IPage<TaskManager> segmentManager = segmentService.selectState(page,offset,announce.getState());
         List<TaskManager> list = segmentManager.getRecords();
 
 //        User user = userService.selectUserInfo(announce.getUserId());
@@ -435,9 +437,9 @@ public class TaskController {
 //        long currentTime = System.currentTimeMillis()/1000;
 //        long tokenTime = Long.valueOf(user.getTokenTime());
 
-        Integer page = findFailTask.getPage();
+        Integer page = (findFailTask.getPage()-1)*findFailTask.getOffset();
         Integer offset = findFailTask.getOffset();
-        IPage<TaskManager> taskManagerIPage = segmentService.selectSegment(page - 1, offset);
+        IPage<TaskManager> taskManagerIPage = segmentService.selectSegment(page, offset);
 
         List<TaskManager> list = taskManagerIPage.getRecords();
         List<String> fail = new ArrayList<>();

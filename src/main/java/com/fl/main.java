@@ -11,6 +11,7 @@ import com.fl.utils.*;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.sun.org.apache.bcel.internal.generic.NEW;
+import lombok.Data;
 import net.sf.json.JSONArray;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -28,21 +29,35 @@ public class main {
     private static String mess;
 
     public static void main(String[] args) {
-//        String str = "[{\"resolving\":\"720\",\"url\":\"https://www.cnblogs.com/lovechengyu/p/8032039.html\"},{\"resolving\":\"480\",\"url\":\"https://www.cnblogs.com/lovechengyu/p/8032039.html\"},{\"resolving\":\"320\",\"url\":\"https://www.cnblogs.com/lovechengyu/p/8032039.html\"}]\n";
-//
-//        Gson gson = new Gson();
-//
-//        List<UploadUrl> list = gson.fromJson(str, new TypeToken<List<UploadUrl>>() {
-//        }.getType());
-//
-//        System.out.println(list);
 
-        String url = "D:\\uploadImage\\JvbLDPyohM.jpg";
-        File file = new File(url);
 
-        System.out.println(file.exists());
-        MinioPicUpLoad minioPicUpLoad = new MinioPicUpLoad();
-        minioPicUpLoad.push("test-upload","800000001","jpg",url);
+//        String url = "D:\\uploadImage\\shuaishuai.jpg";
+////        System.out.println(url.indexOf("\\"));
+//        String afkjafkahfak = FileUtils.fixFileName(url, "afkjafkahfak");
+//        System.out.println(afkjafkahfak);
+////
+////        System.out.println(file.exists());
+////        MinioPicUpLoad minioPicUpLoad = new MinioPicUpLoad();
+////        minioPicUpLoad.push("test-upload","800000001","jpg",url);
+
+        test test = new test();
+        Map<String,String> map = new HashMap<>();
+        map.put("haha","heheh");
+        map.put("dada","heddddheh");
+        test.setMap(map);
+        test.setMess("cucucuucu");
+
+        System.out.println(GsonUtils.toJson(test));
+//      data.map
     }
+
+
+    @Data
+    static
+    class test{
+        String mess;
+        Map<String,String> map;
+    }
+
 
 }

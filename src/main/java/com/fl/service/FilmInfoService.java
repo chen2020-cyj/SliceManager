@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.sql.Wrapper;
+import java.util.Map;
 
 @Service
 public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
@@ -47,6 +48,12 @@ public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
 
         return filmInfoMapper.selectPage(infoIPage,wrapper);
     }
+    public FilmInfo selectByNameAndLanguage(Map<String,String> map){
+        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
+        wrapper.allEq(map);
+
+        return filmInfoMapper.selectOne(wrapper);
+    }
     /**
      * 根据Id进行查询
      */
@@ -77,28 +84,70 @@ public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
         return filmInfoMapper.selectPage(infoIPage,wrapper);
     }
     /**
-     * 根据电影名称  电影年份 地区  排序进行多条件筛选
+     * 根据电影类型  电影年份 地区 进行多条件筛选
      */
     public IPage<FilmInfo> selectMore(FindFilmInfo findFilmInfo,Integer page,Integer offset){
         QueryWrapper<FilmInfo> queryWrapper = new QueryWrapper<>();
-        if (findFilmInfo.getArea().equals("")){
 
-            queryWrapper.eq("film_yaer",findFilmInfo.getYear())
-                    .and(Wrapper->Wrapper.like("chinese_name",findFilmInfo.getFilmName()))
-                    .orderByDesc("rating_value");
-        }else if (findFilmInfo.getYear().equals("")){
+       if (findFilmInfo.getYear().equals("")){
 
-            queryWrapper.eq("production_country",findFilmInfo.getArea())
-                    .and(Wrapper->Wrapper.like("chinese_name",findFilmInfo.getFilmName()))
-                    .orderByDesc("rating_value");
-        }else if (findFilmInfo.getFilmName().equals("")){
+           if (findFilmInfo.getTag().equals("")){
+                queryWrapper.like("production_country",findFilmInfo.getArea()).orderByDesc("rating_value");
+           }else if (findFilmInfo.getArea().equals("")){
+                queryWrapper.like("tag",findFilmInfo.getTag()).orderByDesc("rating_value");
+           }else {
+                queryWrapper.like("production_country",findFilmInfo.getArea()).and(Wrapper->Wrapper.like("tag",findFilmInfo.getTag())).orderByDesc("rating_value");
+           }
 
-            queryWrapper.eq("production_country",findFilmInfo.getArea())
-                    .and(Wrapper->Wrapper.like("film_year",findFilmInfo.getYear()))
-                    .orderByDesc("rating_value");
-        }
+       }else if (findFilmInfo.getArea().equals("")){
+            if (findFilmInfo.getTag().equals("")){
+                if (findFilmInfo.getYear().contains(",")){
+                    String[] split = findFilmInfo.getYear().split(",");
+                    queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.lt("film_year",split[1])).orderByDesc("rating_value");
+                }else {
+                    queryWrapper.ge("film_year",findFilmInfo.getYear()).orderByDesc("rating_value");
+                }
+            }else if (findFilmInfo.getYear().equals("")){
+                    queryWrapper.like("tag",findFilmInfo.getTag());
+            }else {
+                if (findFilmInfo.getYear().contains(",")){
+                    String[] split = findFilmInfo.getYear().split(",");
+                    queryWrapper.like("tag",findFilmInfo.getTag()).and(Wrapper->Wrapper.ge("film_year",split[0])).and(Wrapper->Wrapper.lt("film_year",split[1])).orderByDesc("rating_value");
+                }else {
+                    queryWrapper.like("tag",findFilmInfo.getTag()).and(Wrapper->Wrapper.eq("film_year",findFilmInfo.getYear())).orderByDesc("rating_value");
+                }
+            }
+
+       }else if (findFilmInfo.getTag().equals("")){
+
+           if (findFilmInfo.getYear().equals("")){
+               queryWrapper.like("production_country",findFilmInfo.getTag()).orderByDesc("rating_value");
+           }else if (findFilmInfo.getArea().equals("")){
+               if (findFilmInfo.getYear().contains(",")){
+                   String[] split = findFilmInfo.getYear().split(",");
+                   queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.lt("film_year",split[1]));
+               }else {
+                   queryWrapper.eq("film_year",findFilmInfo.getYear());
+               }
+           }else {
+               if (findFilmInfo.getYear().contains(",")){
+                   String[] split = findFilmInfo.getYear().split(",");
+                   queryWrapper.like("production_country",findFilmInfo.getTag()).and(Wrapper->Wrapper.ge("film_year",split[0])).and(Wrapper->Wrapper.lt("film_year",split[1])).orderByDesc("rating_value");
+               }else {
+                   queryWrapper.like("production_country",findFilmInfo.getTag()).and(Wrapper->Wrapper.eq("film_year",findFilmInfo.getYear())).orderByDesc("rating_value");
+               }
+           }
+       }else {
+           queryWrapper.eq("''","");
+       }
         IPage<FilmInfo> infoIPage = new Page<>(page,offset);
 
         return  filmInfoMapper.selectPage(infoIPage,queryWrapper);
+    }
+
+    public void updateByFilmInfoId(FilmInfo filmInfo){
+        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("id",filmInfo.getId());
+        filmInfoMapper.update(filmInfo,wrapper);
     }
 }

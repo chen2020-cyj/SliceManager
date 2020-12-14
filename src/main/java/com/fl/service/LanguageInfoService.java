@@ -47,7 +47,7 @@ public class LanguageInfoService extends ServiceImpl<LanguageInfoMapper, Languag
         QueryWrapper<LanguageInfo> wrapper = new QueryWrapper<>();
         wrapper.eq("id",id);
 
-        return languageInfoMapper.selectOne(wrapper);
+        return languageInfoMapper.selectById(id);
     }
 
     /**

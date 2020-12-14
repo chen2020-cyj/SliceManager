@@ -21,73 +21,72 @@ public class TokenInterceptor implements HandlerInterceptor {
 
     private Logger logger = LoggerFactory.getLogger(TokenInterceptor.class);
     private String urls[] = {
-            "/deal/**",
-//            "/deal/updateToken",
-//            "/deal/signOut",
-//            "/deal/distributionTask",
-//            "/deal/taskState",
-//            "/deal/token"
+            "/deal/login",
+            "/deal/updateToken",
+            "/deal/signOut",
+            "/deal/distributionTask",
+            "/deal/taskState",
+            "/deal/token"
     };
     @Autowired
     private UserService userService;
 
-
     @Override
     public boolean preHandle(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, Object o) throws Exception {
 
-//        String url = httpServletRequest.getRequestURI();
-//        String token = httpServletRequest.getHeader("token");
-//
-//        String method = httpServletRequest.getMethod();
-//        System.out.println(token);
-//
-//        if (!method.equals("OPTIONS")){
-//            logger.info(token);
-//            logger.info(url);
-//            logger.info(method);
-//            // 遍历需要忽略拦截的路径
-//            for (String item : this.urls){
-//                if (item.equals(url)){
-//                    return true;
-//                }
-//            }
-//            // 查询验证token
-//            User userByToken = userService.getUserByToken(token);
-//
-//            if (userByToken != null){
-//                Integer verify = JwtUtils.verify(userByToken.getToken());
-//                if (String.valueOf(verify).equals("0")) {
-//                    System.out.println("token过期拦截");
-//                    httpServletResponse.setCharacterEncoding("UTF-8");
-//                    httpServletResponse.setContentType("application/json; charset=utf-8");
-//                    PrintWriter out = null;
-//                    try {
-//                        ResData res = new ResData();
-//                        res.setCode(2);
-//                        res.setData("403");
-//                        res.setMsg("token过期");
-//                        String json = GsonUtils.toJson(res);
-//                        httpServletResponse.setContentType("application/json");
-//                        out = httpServletResponse.getWriter();
-//                        // 返回json信息给前端
-//                        out.append(json);
-//                        out.flush();
-//                        return false;
-//
-//                    } catch (Exception e) {
-////                    e.printStackTrace();
-//                        httpServletResponse.sendError(500);
-//                        return false;
-//                    }
-//
-//                }else {
-//                    return true;
-//                }
-//            }
-//
-//        }
-//        return false;
-        return true;
+        String url = httpServletRequest.getRequestURI();
+        String token = httpServletRequest.getHeader("token");
+
+        String method = httpServletRequest.getMethod();
+        System.out.println(token);
+
+        if (!method.equals("OPTIONS")){
+            logger.info(token);
+            logger.info(url);
+            logger.info(method);
+            // 遍历需要忽略拦截的路径
+            for (String item : this.urls){
+                if (item.equals(url)){
+                    return true;
+                }
+            }
+            // 查询验证token
+            User userByToken = userService.getUserByToken(token);
+
+            if (userByToken != null){
+                Integer verify = JwtUtils.verify(userByToken.getToken());
+                if (String.valueOf(verify).equals("0")) {
+                    System.out.println("token过期拦截");
+                    httpServletResponse.setCharacterEncoding("UTF-8");
+                    httpServletResponse.setContentType("application/json; charset=utf-8");
+                    PrintWriter out = null;
+                    try {
+                        ResData res = new ResData();
+                        res.setCode(2);
+                        res.setData("403");
+                        res.setMsg("token过期");
+                        String json = GsonUtils.toJson(res);
+                        httpServletResponse.setContentType("application/json");
+                        out = httpServletResponse.getWriter();
+                        // 返回json信息给前端
+                        out.append(json);
+                        out.flush();
+                        return false;
+
+                    } catch (Exception e) {
+//                    e.printStackTrace();
+                        httpServletResponse.sendError(500);
+                        return false;
+                    }
+
+                }else {
+                    return true;
+                }
+            }
+
+        }
+        return false;
+//        return true;
     }
 
     @Override

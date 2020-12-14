@@ -1,6 +1,7 @@
 package com.fl.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -37,7 +38,8 @@ public class FilmSourceRecord {
     /**
      * 对应存储路径表
      */
-    private String visitId;
+    @TableField("visit_id")
+    private String visitUrlId;
     /**
      * 对应语言表
      */

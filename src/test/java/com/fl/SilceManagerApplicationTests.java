@@ -1,6 +1,7 @@
 package com.fl;
 
 import com.fl.entity.User;
+import com.fl.service.FilmInfoService;
 import com.fl.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -16,15 +17,15 @@ import java.util.List;
 public class SilceManagerApplicationTests {
 
     @Autowired
-    private UserService userService;
+    private FilmInfoService filmInfoService;
 
 
     @Test
     public void test() {
 
-    User user = userService.selectUserInfo(2);
 
-        System.out.println(user);
-}
+
+
+    }
 
 }
