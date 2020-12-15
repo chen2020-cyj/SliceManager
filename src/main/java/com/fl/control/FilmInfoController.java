@@ -214,26 +214,21 @@ public class FilmInfoController {
     @ApiOperation("多条件查询")
     @PostMapping(value = "/selectMoreParameter", produces = "application/json;charset=UTF-8")
     public ResFilmData selectMoreParameter(@RequestBody FindFilmInfo findFilmInfo) throws IOException {
-
+        System.out.println(findFilmInfo);
         Map<String, String> map = new HashMap<>();
         map.put("name", findFilmInfo.getYear());
         map.put("category_id", String.valueOf(findFilmInfo.getCategoryId()));
         Search search = searchService.selectByYear(map);
-        if (search.getLimits().contains(",")) {
-            String[] split = search.getLimits().split(",");
-            findFilmInfo.setYear(split[0] + "," + split[1]);
+        System.out.println(search);
+        if(findFilmInfo.getYear() == null) {
+            findFilmInfo.setYear("");
+        }else if (findFilmInfo.getArea() == null){
+            findFilmInfo.setArea("");
+        }else if (findFilmInfo.getTag() == null){
+            findFilmInfo.setTag("");
         }
-//        if (findFilmInfo.getYear().equals("00年代")){
-//            findFilmInfo.setYear("2000,2010");
-//        }else if (findFilmInfo.getYear().equals("90年代")){
-//            findFilmInfo.setYear("1990,2000");
-//        }else if (findFilmInfo.getYear().equals("80年代")){
-//            findFilmInfo.setYear("1980,1990");
-//        }else if (findFilmInfo.getYear().equals("70年代")){
-//            findFilmInfo.setYear("1970,1980");
-//        }else if (findFilmInfo.getYear().equals("更早")){
-//            findFilmInfo.setYear("0000,1970");
-//        }
+//        System.out.println(findFilmInfo);
+
         Integer page = (findFilmInfo.getPage() - 1) * findFilmInfo.getOffset();
         Integer offset = findFilmInfo.getOffset();
 

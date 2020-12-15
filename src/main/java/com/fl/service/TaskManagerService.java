@@ -1,5 +1,6 @@
 package com.fl.service;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -55,17 +56,22 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
 
     /**
      * 根据分辨率和电影名称查询
-     * @param map
+     * @param
      * @return
      */
-    public List<TaskManager> selectSegmentList(Map<String,String> map){
+    public TaskManager selectSegmentList(String resolvingPower,String languageId,String filmName){
 
-        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.allEq(map);
-
-        return taskManagerMapper.selectList(wrapper);
+        QueryWrapper<TaskManager> queryWrapper = new QueryWrapper<>();
+        queryWrapper.like("film_name",filmName).and(Wrapper->Wrapper.eq("resolving_power",resolvingPower)).and(Wrapper->Wrapper.eq("language_id",languageId));
+        return taskManagerMapper.selectOne(queryWrapper);
     }
 
+    public TaskManager selectTaskOne(String filmName,String languageId){
+        QueryWrapper<TaskManager> queryWrapper = new QueryWrapper<>();
+        queryWrapper.like("film_name",filmName).and(Wrapper->Wrapper.eq("language_id",languageId));
+
+        return taskManagerMapper.selectOne(queryWrapper);
+    }
     public TaskManager selectSegmentFilmOne(String filmId){
 
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
@@ -158,10 +164,12 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
     /**
      * 根据filmId 更新upload_state
      */
-    public void updateUploadState(String filmId,TaskManager taskManager){
+    public void updateUploadState(String filmId,String state){
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
         wrapper.eq("film_id",filmId);
 
+        TaskManager taskManager = taskManagerMapper.selectOne(wrapper);
+        taskManager.setUploadState(state);
         taskManagerMapper.update(taskManager,wrapper);
     }
     /**

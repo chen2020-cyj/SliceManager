@@ -21,6 +21,7 @@ public class TaskManager {
     /**
      * 对应电影名称
      */
+
     private String filmName;
     /**
      * 下载状态

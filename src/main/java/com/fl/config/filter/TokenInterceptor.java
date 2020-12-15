@@ -26,7 +26,10 @@ public class TokenInterceptor implements HandlerInterceptor {
             "/deal/signOut",
             "/deal/distributionTask",
             "/deal/taskState",
-            "/deal/token"
+            "/deal/token",
+            "/deal/distributionTask",
+            "/deal/taskState"
+
     };
     @Autowired
     private UserService userService;

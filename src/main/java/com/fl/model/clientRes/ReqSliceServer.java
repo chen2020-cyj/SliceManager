@@ -9,5 +9,5 @@ public class ReqSliceServer {
 
     private Integer code;
 
-    private String data;
+    private Object data;
 }

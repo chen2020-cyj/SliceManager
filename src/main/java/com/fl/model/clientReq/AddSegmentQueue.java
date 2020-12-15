@@ -19,7 +19,7 @@ public class AddSegmentQueue {
 
     private String language;
 
-    private String token;
-
-    private Integer userId;
+//    private String token;
+//
+//    private Integer userId;
 }
