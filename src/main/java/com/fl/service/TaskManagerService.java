@@ -164,12 +164,11 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
     /**
      * 根据filmId 更新upload_state
      */
-    public void updateUploadState(String filmId,String state){
+    public void updateUploadState(String filmId,TaskManager taskManager){
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
         wrapper.eq("film_id",filmId);
 
-        TaskManager taskManager = taskManagerMapper.selectOne(wrapper);
-        taskManager.setUploadState(state);
+
         taskManagerMapper.update(taskManager,wrapper);
     }
     /**

@@ -28,14 +28,15 @@ public class main {
 
         MinioBackMessage minioBackMessage = new MinioBackMessage();
         minioBackMessage.setUrl("http://162.245.236.170/film/ZsGHknElOh/ZsGHknElOh-32001.m3u8");
-        minioBackMessage.setUrl("2.79");
-        minioBackMessage.setUrl("2.79");
+        minioBackMessage.setOriginalSize("10.0");
+        minioBackMessage.setActualSize("2.79");
+
 
 //        "{\"segmentUploadComplete\":\"\",\"segmentUpload\":\"6003,6004\",\"segmentUploadFail\":\"\"}"
         ReqSliceServer resData = new ReqSliceServer();
-        resData.setCode(6003);
+        resData.setCode(2011);
         resData.setFilmId("ZsGHknElOh");
-        resData.setData(minioBackMessage);
+        resData.setData("");
 
         OkHttpClient client = new OkHttpClient();//创建OkHttpClient对象。
 //        FormBody.Builder formBody = new FormBody.Builder();//创建表单请求体

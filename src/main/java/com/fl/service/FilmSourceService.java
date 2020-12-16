@@ -20,7 +20,7 @@ public class FilmSourceService extends ServiceImpl<FilmSourceMapper, FilmSourceR
     private UserMapper userMapper;
 
     public void addFilmSource(FilmSourceRecord film){
-
+        filmSourceMapper.insert(film);
     }
     public FilmSourceRecord findFilm(String filmId){
 

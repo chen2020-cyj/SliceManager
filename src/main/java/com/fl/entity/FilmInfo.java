@@ -71,6 +71,10 @@ public class FilmInfo {
 
     private int category;//对于电影电视剧的判断
     /**
+     * 电影全名
+     */
+    private String full_name;
+    /**
      * 电影是否上传
      */
     private String whetherUpload;
