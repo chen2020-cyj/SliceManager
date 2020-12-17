@@ -682,7 +682,7 @@ public class SliceController {
         double filmSize = Double.valueOf(minioBackMessage1.getOriginalSize());
 
         //应该要减去的大小
-        double actualSize = Double.valueOf(minioBackMessage1.getActualSize());
+        double actualSize = Double.valueOf(turnGB(minioBackMessage1.getActualSize()));
         minioInfo.setAvailableCapacity(minioInfo.getAvailableCapacity() + filmSize - actualSize);
         minioInfo.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
 
@@ -791,8 +791,6 @@ public class SliceController {
     private void reptile(ReqSliceServer reqSliceServer,ResData res){
         FilmInfo filmInfo = GsonUtils.fromJson(String.valueOf(reqSliceServer.getData()), FilmInfo.class);
         TaskManager taskManager = taskManagerService.selectByFilmId(reqSliceServer.getFilmId());
-//        IPage<FilmInfo> infoIPage = filmInfoService.selectByFilmName(taskManager.getFilmName());
-//        List<FilmInfo> filmInfos = infoIPage.getRecords();
 
         filmInfoService.insertFilmInfo(filmInfo);
 
@@ -804,5 +802,22 @@ public class SliceController {
         res.setCode(1);
         res.setMsg("");
         res.setData(filmInfo);
+    }
+
+
+    public static String turnGB(String size){
+
+        if (size.contains("G")){
+            return size.replace("G","");
+        }else if (size.contains("M")){
+            String m = size.replace("M", "");
+            Double aDouble = Double.valueOf(m);
+            return String.valueOf(aDouble / 1024);
+        }else if (size.contains("K")){
+            String k = size.replace("K", "");
+            Double aDouble = Double.valueOf(k);
+            return String.valueOf(aDouble / 1024 / 1024);
+        }
+        return null;
     }
 }

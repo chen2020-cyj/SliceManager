@@ -34,9 +34,9 @@ public class main {
 
 //        "{\"segmentUploadComplete\":\"\",\"segmentUpload\":\"6003,6004\",\"segmentUploadFail\":\"\"}"
         ReqSliceServer resData = new ReqSliceServer();
-        resData.setCode(2011);
+        resData.setCode(6003);
         resData.setFilmId("ZsGHknElOh");
-        resData.setData("");
+        resData.setData(minioBackMessage);
 
         OkHttpClient client = new OkHttpClient();//创建OkHttpClient对象。
 //        FormBody.Builder formBody = new FormBody.Builder();//创建表单请求体
