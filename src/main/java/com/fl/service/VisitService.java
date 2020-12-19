@@ -44,8 +44,10 @@ public class VisitService extends ServiceImpl<VisitUrlMapper, VisitUrl> {
     /**
      *  插入数据
      */
-    public void insertVisitUrl(VisitUrl visitUrl){
+    public int insertVisitUrl(VisitUrl visitUrl){
 
-        visitUrlMapper.insert(visitUrl);
+        return visitUrlMapper.insert(visitUrl);
     }
+
+
 }

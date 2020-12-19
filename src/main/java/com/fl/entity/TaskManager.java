@@ -58,15 +58,19 @@ public class TaskManager {
     /**
      * 放入到存储桶路径
      */
-    private String minioUrl;
+//    private String minioUrl;
     /**
      * 对应语言表id
      */
     private String languageId;
     /**
-     * 是否需要爬虫
+     * doubanId
      */
     private String doubanId;
+    /**
+     * 是否需要爬虫
+     */
+    private Integer whetherClimb;
     /**
      * 分辨率
      */

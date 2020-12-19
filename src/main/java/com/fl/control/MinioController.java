@@ -76,7 +76,7 @@ public class MinioController {
     public String selectAllMinio(@RequestBody FindAllMinio findAllMinio){
 
 
-        Integer page = (findAllMinio.getPage()-1)*findAllMinio.getOffset();
+//        Integer page = (findAllMinio.getPage()-1)*findAllMinio.getOffset();
         Integer offset = findAllMinio.getOffset();
 //        User user = userService.selectUserInfo(findAllMinio.getUserId());
 
@@ -84,7 +84,7 @@ public class MinioController {
 
 
 
-                IPage<MinioInfo> minioInfoIPage = minioInfoService.selectAllMinio(findAllMinio.getResolvingPower(), page, offset);
+                IPage<MinioInfo> minioInfoIPage = minioInfoService.selectAllMinio(findAllMinio.getResolvingPower(), findAllMinio.getPage(), offset);
                 listMinioInfo = minioInfoIPage.getRecords();
 
                 for (int i=0;i<listMinioInfo.size();i++) {

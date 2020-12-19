@@ -37,6 +37,9 @@ public class TaskController {
     private FilmInfoService filmInfoService;
     @Autowired
     private LanguageInfoService languageInfoService;
+    @Autowired
+    private VisitService visitService;
+
 
     private ResData res = new ResData();
     private Gson gson = new Gson();
@@ -51,88 +54,228 @@ public class TaskController {
     @ApiOperation("客户端查看所有任务")
     @PostMapping(value = "/findMoreTask", produces = "application/json;charset=UTF-8")
     public String clientFindMoreTask(@RequestBody FindSegmentTask task) {
-        Integer page = (task.getPage() - 1) * task.getOffset();
-        Integer offset = task.getOffset();
+//        Integer page = (task.getPage() - 1) * task.getOffset();
+//        Integer offset = task.getOffset();
+        Integer id = 0;
 
-        IPage<TaskManager> segmentManagerIPage = segmentService.selectSegment(page, offset);
-//        User user = userService.selectUserInfo(Integer.valueOf(task.getUserId()));
-        List<TaskManager> list = segmentManagerIPage.getRecords();
-//
-//        long currentTime = System.currentTimeMillis() / 1000;
-//        long tokenTime = Long.valueOf(user.getTokenTime());
+        if (!task.getFilmId().equals("")){
 
+            TaskManager taskManager = segmentService.selectByFilmId(task.getFilmId());
 
-        if (list.size() > 0) {
-            for (int i = 0; i < list.size(); i++) {
-
-                SegmentUploadState segmentUploadState = GsonUtils.fromJson(String.valueOf(list.get(i).getUploadState()), SegmentUploadState.class);
-
-                list.get(i).setUploadState(segmentUploadState);
-
+            if (!taskManager.getSegmentState().equals("")){
+                SegmentState segmentState = gson.fromJson(String.valueOf(taskManager.getSegmentState()), SegmentState.class);
+                taskManager.setSegmentState(segmentState);
             }
-            for (int i = 0; i < list.size(); i++) {
-
-                SegmentState segmentState = GsonUtils.fromJson(String.valueOf(list.get(i).getSegmentState()), SegmentState.class);
-                list.get(i).setSegmentState(segmentState);
+            if (!taskManager.getUploadState().equals("")){
+                SegmentUploadState segmentUploadState = gson.fromJson(String.valueOf(taskManager.getUploadState()), SegmentUploadState.class);
+                taskManager.setUploadState(segmentUploadState);
             }
-            for (int i = 0; i < list.size(); i++) {
-
-                LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(list.get(i).getLanguageId()));
-                list.get(i).setLanguageId(languageInfo.getLanguage());
-            }
-
-            resFilmData.setCode(0);
-            resFilmData.setMsg("success");
-            resFilmData.setData(list);
-            resFilmData.setTotal(segmentService.selectTaskCount());
-            return GsonUtils.toJson(resFilmData);
-        } else {
-            res.setCode(2);
-            res.setMsg("数据错误");
-            res.setData("");
-
-            return GsonUtils.toJson(res);
-        }
-
-    }
-
-    @ApiOperation("客户端查看单个任务")
-    @PostMapping(value = "/findOneTask", produces = "application/json;charset=UTF-8")
-    public String findOneTask(@RequestBody FindOneSegment findOneSegment) {
-
-//        Integer userId = JwtUtils.verify(findOneSegment.getToken());
-//        User user = userService.selectUserInfo(userId);
-//
-        TaskManager taskManager = segmentService.selectSegmentFilmOne(findOneSegment.getFilmId());
-        System.out.println(taskManager);
-//        long currentTime = System.currentTimeMillis() / 1000;
-//        long tokenTime = Long.valueOf(user.getTokenTime());
-
-        if (taskManager != null) {
-
-            SegmentUploadState segmentUploadState = GsonUtils.fromJson(String.valueOf(taskManager.getUploadState()), SegmentUploadState.class);
-
-            taskManager.setUploadState(segmentUploadState);
-
-            SegmentState segmentState = GsonUtils.fromJson(String.valueOf(taskManager.getSegmentState()), SegmentState.class);
-            taskManager.setSegmentState(segmentState);
 
             resFilmData.setCode(0);
             resFilmData.setMsg("success");
             resFilmData.setData(taskManager);
             resFilmData.setTotal(1);
 
-            return GsonUtils.toJson(resFilmData);
-        } else {
-            res.setCode(1);
-            res.setMsg("err");
-            res.setData("");
+            return  GsonUtils.toJson(resFilmData);
+        }else {
+            if (task.getSegmentState().equals("0")) {
+                Integer integer = idChange(id, task);
+                ResTaskInfoMapper resTaskInfoMapper = segmentService.selectAllTaskManager(integer, task);
+                List<TaskManager> managerList = resTaskInfoMapper.getIPage().getRecords();
 
-            return GsonUtils.toJson(res);
+                List<TaskManager> managerList1 = changeTaskManager(managerList);
+                resFilmData.setCode(0);
+                resFilmData.setMsg("success");
+                resFilmData.setData(managerList1);
+                resFilmData.setTotal(resTaskInfoMapper.getCount());
+
+                return GsonUtils.toJson(resFilmData);
+            } else {
+                List<TaskManager> taskManagerList = new ArrayList<>();
+                List<TaskManager> managerList = segmentService.selectAllSegment();
+                Integer integer = idChange(id, task);
+                for (int i=0;i<managerList.size();i++){
+                    SegmentState segmentState = GsonUtils.fromJson(String.valueOf(managerList.get(i).getSegmentState()), SegmentState.class);
+                    if (segmentState != null){
+                        if (!segmentState.getSegmentFail().equals("")){
+                            taskManagerList.add(managerList.get(i));
+                        }
+                    }
+                }
+                List<TaskManager> list = selectAllFailTask(integer, taskManagerList, task);
+                List<TaskManager> allFailTask = changeTaskManager(list);
+
+                Integer indexPage = (task.getPage()-1)*task.getOffset();
+                Integer offset = task.getOffset()*task.getPage();
+
+                resFilmData.setCode(0);
+                resFilmData.setMsg("success");
+                if (indexPage > allFailTask.size()){
+                    resFilmData.setData(allFailTask.subList(allFailTask.size(),allFailTask.size()));
+                }else if (offset > allFailTask.size()){
+                    resFilmData.setData(allFailTask.subList(indexPage,allFailTask.size()));
+                }else {
+                    resFilmData.setData(allFailTask.subList(indexPage,offset));
+                }
+
+                resFilmData.setTotal(taskManagerList.size());
+                return  GsonUtils.toJson(resFilmData);
+            }
+
         }
 
 
     }
+
+    /**
+     * 判断传入的参数
+     * @param id
+     * @param task
+     * @return
+     */
+    private Integer idChange(Integer id,FindSegmentTask task){
+        if (task.getDownloadState().equals("")){
+            if (task.getLinkState().equals("")){
+                //downloadState 不传 linkState 不传
+                id = 1;
+            }else {
+                // downloadState 不传 linkState 传
+                id = 2;
+            }
+        }else {
+            if (task.getLinkState().equals("")){
+                //downloadState 传 linkState 不传
+                id = 3;
+            }else {
+                // downloadState 传 linkState 传
+                id = 4;
+            }
+        }
+        return  id;
+    }
+    /**
+     * 查询所有失败的任务
+     */
+    private List<TaskManager> selectAllFailTask(Integer id,List<TaskManager> managerList,FindSegmentTask task){
+        List<TaskManager> list = new ArrayList<>();
+        switch (id){
+            case 1:
+                //downloadState不传 linkState不传 id = 1
+                for (int i=0;i<managerList.size();i++){
+                    list.add(managerList.get(i));
+                }
+                break;
+            case 2:
+                //downloadState不传 linkState传 id = 2
+                for (int i=0;i<managerList.size();i++){
+                    if(managerList.get(i).getLinkState().equals(task.getLinkState())){
+                        list.add(managerList.get(i));
+                    }
+                }
+                break;
+            case 3:
+                //downloadState传 linkState不传 id = 3
+                for (int i=0;i<managerList.size();i++){
+                    if(managerList.get(i).getDownloadState().equals(task.getDownloadState())){
+                        list.add(managerList.get(i));
+                    }
+                }
+                break;
+            case 4:
+                //downloadState传 linkState传 id = 4
+                for (int i=0;i<managerList.size();i++){
+                    if(managerList.get(i).getDownloadState().equals(task.getDownloadState()) && managerList.get(i).getLinkState().equals(task.getLinkState())){
+                        list.add(managerList.get(i));
+                    }
+                }
+                break;
+//            case 5:
+//                // filmId 传  downloadState不传 linkState不传 id = 5
+//                for (int i=0;i<managerList.size();i++){
+//                    if(managerList.get(i).equals(task.getFilmId())){
+//                        list.add(managerList.get(i));
+//                    }
+//                }
+//                break;
+//            case 6:
+//                // filmId 传  downloadState不传 linkState传 id = 6
+//                for (int i=0;i<managerList.size();i++){
+//                    if(managerList.get(i).equals(task.getFilmId()) && managerList.get(i).getLinkState().equals(task.getLinkState())){
+//                        list.add(managerList.get(i));
+//                    }
+//                }
+//                break;
+//            case 7:
+//                // filmId 传  downloadState传 linkState不传 id = 7
+//                for (int i=0;i<managerList.size();i++){
+//                    if(managerList.get(i).equals(task.getFilmId()) && managerList.get(i).getDownloadState().equals(task.getDownloadState())){
+//                        list.add(managerList.get(i));
+//                    }
+//                }
+//                break;
+//            case 8:
+//                // filmId 传  downloadState传 linkState传 id = 8
+//                for (int i=0;i<managerList.size();i++){
+//                    if(managerList.get(i).equals(task.getFilmId()) && managerList.get(i).getDownloadState().equals(task.getDownloadState()) && managerList.get(i).equals(task.getLinkState())){
+//                        list.add(managerList.get(i));
+//                    }
+//                }
+//                break;
+        }
+        return list;
+    }
+    /**
+     * 转换segmentState 和 uploadState
+     * @param
+     * @return
+     */
+    private List<TaskManager> changeTaskManager(List<TaskManager> managerList){
+
+        for (int i=0;i<managerList.size();i++){
+            if (!managerList.get(i).getSegmentState().equals("")){
+                SegmentState segmentState = gson.fromJson(String.valueOf(managerList.get(i).getSegmentState()), SegmentState.class);
+                managerList.get(i).setSegmentState(segmentState);
+            }
+            if (!managerList.get(i).getUploadState().equals("")){
+                SegmentUploadState segmentUploadState = gson.fromJson(String.valueOf(managerList.get(i).getUploadState()), SegmentUploadState.class);
+                managerList.get(i).setUploadState(segmentUploadState);
+            }
+
+        }
+        return managerList;
+    }
+//    @ApiOperation("客户端查看单个任务")
+//    @PostMapping(value = "/findOneTask", produces = "application/json;charset=UTF-8")
+//    public String findOneTask(@RequestBody FindOneSegment findOneSegment) {
+//
+//        TaskManager taskManager = segmentService.selectSegmentFilmOne(findOneSegment.getFilmId());
+//        System.out.println(taskManager);
+//
+//        if (taskManager != null) {
+//
+//            SegmentUploadState segmentUploadState = GsonUtils.fromJson(String.valueOf(taskManager.getUploadState()), SegmentUploadState.class);
+//
+//            taskManager.setUploadState(segmentUploadState);
+//
+//            SegmentState segmentState = GsonUtils.fromJson(String.valueOf(taskManager.getSegmentState()), SegmentState.class);
+//            taskManager.setSegmentState(segmentState);
+//
+//            resFilmData.setCode(0);
+//            resFilmData.setMsg("success");
+//            resFilmData.setData(taskManager);
+//            resFilmData.setTotal(1);
+//
+//            return GsonUtils.toJson(resFilmData);
+//        } else {
+//            res.setCode(1);
+//            res.setMsg("err");
+//            res.setData("");
+//
+//            return GsonUtils.toJson(res);
+//        }
+//
+//
+//    }
 
     @ApiOperation("客户端添加任务")
     @PostMapping(value = "/addFilmSource", produces = "application/json;charset=UTF-8")
@@ -145,16 +288,11 @@ public class TaskController {
         String filmId = getRandomString(10);
 
         Map<String, String> map = new HashMap<>();
-//        User user = userService.selectUserInfo(Integer.valueOf(queue.getUserId()));
 
         LanguageInfo languageInfo1 = languageInfoService.selectByLanguage(queue.getLanguage());
 
-
         List<Integer> arrList = new ArrayList<>();
-//        List<String> arrList2 = new ArrayList<>();
-//        for (int i=0;i<split.length;i++){
-//            arrList1.add(split[i]);
-//        }
+
         if (!queue.getResolvingPower().contains(",")){
 
         }else {
@@ -174,41 +312,62 @@ public class TaskController {
             queue.setResolvingPower(newResolvingPower);
         }
 
+        Integer id = 0;
         Map<String, String> filmMap = new HashMap<>();
-        filmMap.put("film_name", queue.getFilmName());
-        filmMap.put("language_id", String.valueOf(languageInfo1.getId()));
-        IPage<FilmInfo> infoIPage = filmInfoService.selectByFilmName(queue.getFilmName());
-        List<FilmInfo> filmInfos = infoIPage.getRecords();
-//            List<FilmInfo> filmInfoList = new ArrayList<>();
-//            filmInfoList = infoIPage.getRecords();
+        if (queue.getDoubanId().equals("")){
+            filmMap.clear();
+        }else {
 
-        if (filmInfos.size() > 0) {
-            segment.setDoubanId("");
-        } else {
+        }
+        filmMap.put("douban_id", queue.getDoubanId());
+        filmMap.put("language_id", String.valueOf(languageInfo1.getId()));
+//        if (queue.getDoubanId()){
+//
+//        }
+        if (queue.getDoubanId().equals("")){
             List<DouBanData> list = OkHttpUtils.douBanSearch(queue.getFilmName());
+            System.out.println("adajfkjf:"+list);
             if (list.size() > 0){
+                System.out.println(list);
                 for (int i=0;i<list.size();i++){
                     if (list.get(i).getTitle().contains(queue.getFilmName())){
+                        id = 1;
                         segment.setDoubanId(String.valueOf(list.get(i).getDoubanId()));
+                        segment.setWhetherClimb(id);
                         break;
                     }
                 }
                 if (segment.getDoubanId().equals("") || segment.getDoubanId() == null ){
+                    id = 1;
                     segment.setDoubanId(String.valueOf(list.get(0).getDoubanId()));
+                    segment.setWhetherClimb(id);
+                }
+                if (segment.equals("")){
+                    res.setCode(7);
+                    res.setMsg("豆瓣解析失败");
+                    res.setData("");
+
+                    return GsonUtils.toJson(res);
                 }
             }else {
-                res.setCode(7);
-                res.setMsg("豆瓣解析失败");
-                res.setData("");
+//                res.setCode(7);
+//                res.setMsg("豆瓣解析失败");
+//                res.setData("");
             }
+        }
+        IPage<FilmInfo> infoIPage = filmInfoService.selectByDouBanId(queue.getDoubanId());
+        List<FilmInfo> filmInfos = infoIPage.getRecords();
+
+        if (filmInfos.size() > 0) {
+            segment.setDoubanId(String.valueOf(filmInfos.get(0).getDoubanId()));
+            segment.setWhetherClimb(id);
+        } else {
 
         }
+        List<TaskManager> taskManagerList = segmentService.selectSegmentList(queue.getResolvingPower(), String.valueOf(languageInfo1.getId()), queue.getFilmName());
 
-
-        TaskManager taskManager = segmentService.selectSegmentList(queue.getResolvingPower(), String.valueOf(languageInfo1.getId()), queue.getFilmName());
-        System.out.println(taskManager);
-        if (taskManager == null) {
-            ResData resData = addTask(queue, String.valueOf(languageInfo1.getId()), segment);
+        if (taskManagerList.size() == 0) {
+            ResData resData = addTask(queue, String.valueOf(languageInfo1.getId()), segment,filmId);
             return GsonUtils.toJson(resData);
         } else {
             System.out.println("adadadad");
@@ -218,8 +377,6 @@ public class TaskController {
             res.setData("");
 
             return GsonUtils.toJson(res);
-
-
         }
 
     }
@@ -230,7 +387,7 @@ public class TaskController {
      * @param
      * @return
      */
-    public ResData addTask(AddSegmentQueue queue, String languageId, TaskManager segment) {
+    public ResData addTask(AddSegmentQueue queue, String languageId, TaskManager segment,String filmId) {
         ResAddSegment resAddSegment = new ResAddSegment();
         double filmSize = 0.0;
         if (queue.getFilmSize().contains("MB")) {
@@ -268,13 +425,7 @@ public class TaskController {
                     minioInfoService.updateMinio(minioInfo,minioInfos.get(i).getId());
                     break;
                 } else {
-//                    if (notMinioId.equals("")) {
-////                        notMinioId = queue.getResolvingPower();
-////                    } else {
-////                        notMinioId = notMinioId + "," + queue.getResolvingPower();
-////                        ;
-////                    }
-////
+
                     System.out.println(resList);
                     resAddSegment.setResolvingPower(queue.getResolvingPower());
 
@@ -282,10 +433,15 @@ public class TaskController {
             }
             resList.add(resAddSegment);
             if (resAddSegment.getResolvingPower() == null) {
-                TaskManager taskManager = resTaskManager(segment, minioId, queue, filmSize, languageId);
+                TaskManager taskManager = resTaskManager(filmId,segment, minioId, queue, filmSize, languageId);
                 minioInfoService.updateMinio(minioInfo, minioInfos.get(0).getId());
 
                 segmentService.insertSegment(taskManager);
+
+//                VisitUrl visitUrl = new VisitUrl();
+                String currentTime = String.valueOf(System.currentTimeMillis()/1000);
+                VisitUrl visitUrl = createVisitUrl(filmId,currentTime, queue);
+                visitService.insertVisitUrl(visitUrl);
             }
             res.setCode(6);
             res.setMsg("分辨率已经存满的存储桶");
@@ -305,7 +461,6 @@ public class TaskController {
                 List<MinioInfo> minio = minioInfoService.findMinio(split[i]);
                 List<DbData> listDb = new ArrayList<>();
                 msg = GsonUtils.fromJson(String.valueOf(minio.get(0).getMsg()), Msg.class);
-
 
                 totalSize = minio.get(0).getTotalCapacity();
                 availableSize = minio.get(0).getAvailableCapacity();
@@ -329,8 +484,6 @@ public class TaskController {
                     minioInfoService.updateMinio(minioInfo,minioInfo.getId());
 
                     continue;
-//
-
                 } else {
                     if (notMinioId.equals("")) {
                         notMinioId = split[i];
@@ -341,7 +494,7 @@ public class TaskController {
                     resList.add(resAddSegment);
                 }
             }
-            TaskManager taskManager = resTaskManager(segment, MinioId, queue, filmSize, languageId);
+            TaskManager taskManager = resTaskManager(filmId,segment, MinioId, queue, filmSize, languageId);
             String str = "";
 //            if (resList.size() == 0) {
 
@@ -370,8 +523,14 @@ public class TaskController {
                 System.out.println("清晰度"+str);
                 taskManager.setResolvingPower(str);
                 segmentService.insertSegment(taskManager);
+                String currentTime = String.valueOf(System.currentTimeMillis()/1000);
+                VisitUrl visitUrl = createVisitUrl(filmId,currentTime, queue);
+                visitService.insertVisitUrl(visitUrl);
             }else {
                 System.out.println("数据" + taskManager);
+                String currentTime = String.valueOf(System.currentTimeMillis()/1000);
+                VisitUrl visitUrl = createVisitUrl(filmId,currentTime, queue);
+                visitService.insertVisitUrl(visitUrl);
                 segmentService.insertSegment(taskManager);
             }
 
@@ -409,12 +568,21 @@ public class TaskController {
         }
 
     }
+    public VisitUrl createVisitUrl(String filmId,String createTime,AddSegmentQueue queue){
+        VisitUrl visitUrl = new VisitUrl();
+        visitUrl.setMinioUrl("");
+        visitUrl.setNginxUrl("");
+        visitUrl.setFilmId(filmId);
+        visitUrl.setCreateTime(createTime);
+        visitUrl.setCdnUrl("");
+        visitUrl.setUpdateTime("");
+        return visitUrl;
+    }
 
-
-    public TaskManager resTaskManager(TaskManager segment, String MinioId, AddSegmentQueue queue, double filmSize, String languageId) {
+    public TaskManager resTaskManager(String filmId,TaskManager segment, String MinioId, AddSegmentQueue queue, double filmSize, String languageId) {
 
         segment.setMinioId(MinioId);
-        segment.setFilmId(getRandomString(10));
+        segment.setFilmId(filmId);
         segment.setFilmName(queue.getFilmName());
         segment.setDownloadState("0");
         segment.setResolvingPower(queue.getResolvingPower());
@@ -428,44 +596,13 @@ public class TaskController {
         segment.setFilmSize(String.valueOf(filmSize));
         segment.setSubtitleSuffix(queue.getSubtitleSuffix());
         segment.setLanguageId(languageId);
-        segment.setMinioUrl("");
+//
+//        segment.setMinioUrl("");
 //        segment.setDoubanId("");
         return segment;
     }
 
 
-    @ApiOperation("客户端查看状态，传入不同的状态获得不同状态的数据")
-    @PostMapping(value = "/findQueueAnnounceState", produces = "application/json;charset=UTF-8")
-    public String findQueueState(@RequestBody FindAnnounce announce) {
-
-        Integer page = (announce.getPage() - 1) * announce.getOffset();
-        Integer offset = announce.getOffset();
-        IPage<TaskManager> segmentManager = segmentService.selectState(page, offset, announce.getState());
-        List<TaskManager> list = segmentManager.getRecords();
-
-//        User user = userService.selectUserInfo(announce.getUserId());
-//        Long currentTime = System.currentTimeMillis()/1000;
-//        Long tokenTime =Long.valueOf(user.getTokenTime());
-
-
-        if (list.size() > 0) {
-
-            resFilmData.setCode(0);
-            resFilmData.setMsg("err");
-            resFilmData.setData(list);
-            resFilmData.setTotal(segmentService.selectStateCount(announce.getState()));
-            return GsonUtils.toJson(res);
-
-        } else {
-            res.setCode(1);
-            res.setMsg("err");
-            res.setData("");
-
-            return GsonUtils.toJson(res);
-        }
-
-
-    }
 
     @ApiOperation("客户端删除任务")
     @PostMapping(value = "/delTask", produces = "application/json;charset=UTF-8")
@@ -497,10 +634,6 @@ public class TaskController {
     @PostMapping(value = "/updateTask", produces = "application/json;charset=UTF-8")
     public ResData updateTask(@RequestBody UpdateTask updateTask) {
 
-//        User user = userService.selectUserInfo(updateTask.getUserId());
-//        long currentTime = System.currentTimeMillis()/1000;
-//        long tokenTime = Long.valueOf(user.getTokenTime());
-
         String s = segmentService.updateFailUrl(updateTask.getFilmId(), updateTask.getBtUrl(), updateTask.getSubtitleUrl());
         if (s.equals("success")) {
             segmentService.updateIdTask(updateTask.getFilmId(), "0");
@@ -518,85 +651,6 @@ public class TaskController {
 
     }
 
-    @ApiOperation("客户端查看切片失败的任务")
-    @PostMapping(value = "/findFailTask", produces = "application/json;charset=UTF-8")
-    public ResFilmData findFailTask(@RequestBody FindFailTask findFailTask) {
-        List<TaskManager> taskList = new ArrayList<>();
-//        User user = userService.selectUserInfo(findFailTask.getUserId());
-//        long currentTime = System.currentTimeMillis()/1000;
-//        long tokenTime = Long.valueOf(user.getTokenTime());
-
-        Integer page = (findFailTask.getPage() - 1) * findFailTask.getOffset();
-        Integer offset = findFailTask.getOffset();
-        IPage<TaskManager> taskManagerIPage = segmentService.selectSegment(page, offset);
-
-        List<TaskManager> list = taskManagerIPage.getRecords();
-        List<String> fail = new ArrayList<>();
-
-        String str = "";
-        boolean state = false;
-
-        for (int i = 0; i < list.size(); i++) {
-            TaskManager task = new TaskManager();
-
-            SegmentState segmentState = GsonUtils.fromJson(String.valueOf(list.get(i).getSegmentState()), SegmentState.class);
-            if (segmentState != null) {
-
-                if (!segmentState.getSegmentFail().equals("")) {
-                    if (!segmentState.getSegmentFail().contains(",")) {
-
-                        if (segmentState.getSegmentFail().equals("2021")) {
-                            state = true;
-                        } else if (segmentState.getSegmentFail().equals("2022")) {
-                            state = true;
-                        } else if (segmentState.getSegmentFail().equals("2023")) {
-                            state = true;
-                        } else {
-
-                        }
-                        if (state == true) {
-                            list.get(i).setSegmentState(segmentState);
-                            SegmentUploadState uploadState = GsonUtils.fromJson(String.valueOf(list.get(i).getUploadState()), SegmentUploadState.class);
-                            list.get(i).setUploadState(uploadState);
-                            taskList.add(list.get(i));
-                        }
-                        state = false;
-                    } else {
-                        String[] split = segmentState.getSegmentFail().split(",");
-                        for (int j = 0; j < split.length; j++) {
-                            if (split[j].equals("2021")) {
-                                state = true;
-                            } else if (split[j].equals("2022")) {
-                                state = true;
-                            } else if (split[j].equals("2023")) {
-                                state = true;
-                            } else {
-
-                            }
-                        }
-                        if (state == true) {
-                            list.get(i).setSegmentState(segmentState);
-                            SegmentUploadState uploadState = GsonUtils.fromJson(String.valueOf(list.get(i).getUploadState()), SegmentUploadState.class);
-                            list.get(i).setUploadState(uploadState);
-                            taskList.add(list.get(i));
-                        }
-                        state = false;
-                    }
-                } else {
-                    continue;
-                }
-            } else {
-                continue;
-            }
-        }
-        resTaskData.setCode(0);
-        resTaskData.setMsg("返回所有切片失败的任务");
-        resTaskData.setData(taskList);
-        resTaskData.setTotal(taskList.size());
-//            taskList.clear();
-        return resTaskData;
-
-    }
 
     /**
      * 添加语言
@@ -607,11 +661,6 @@ public class TaskController {
     @ApiOperation("添加语言")
     @PostMapping(value = "/addLanguage", produces = "application/json;charset=UTF-8")
     public ResData addLanguage(@RequestBody AddLanguage addLanguage) {
-
-//        User user = userService.selectUserInfo(addLanguage.getUserId());
-//
-//        long currentTime = System.currentTimeMillis()/1000;
-//        long tokenTime = Long.valueOf(user.getTokenTime());
 
 
         LanguageInfo languageInfo = new LanguageInfo();

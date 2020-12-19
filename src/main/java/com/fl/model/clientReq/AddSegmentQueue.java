@@ -19,6 +19,9 @@ public class AddSegmentQueue {
 
     private String language;
 
+    private String doubanId;
+
+
 //    private String token;
 //
 //    private Integer userId;

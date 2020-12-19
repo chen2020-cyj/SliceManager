@@ -48,6 +48,7 @@ public class SliceController {
     private VisitService visitService;
 
     private ResData res = new ResData();
+    private Gson gson = new Gson();
 //    private ResSegmentManager resData = new ResSegmentManager();
 
     private Msg msg = new Msg();
@@ -67,7 +68,7 @@ public class SliceController {
             if (!listTask.get(0).getResolvingPower().contains(",")){
 
                 MinioInfo minio = minioInfoService.findMinio(Integer.valueOf(listTask.get(0).getMinioId()));
-                System.out.println();
+
                 Msg msg = GsonUtils.fromJson(String.valueOf(minio.getMsg()), Msg.class);
                 System.out.println(msg);
                 serverInfo.put(minio.getResolvingPower()+"P",String.valueOf(msg.getMsg()));
@@ -83,6 +84,8 @@ public class SliceController {
                 resSegment.setMsg(serverInfo);
                 resSegment.setFilmSize(listTask.get(0).getFilmSize());
                 resSegment.setDoubanId(listTask.get(0).getDoubanId());
+                resSegment.setWhetherClimb(listTask.get(0).getWhetherClimb());
+                System.out.println(resSegment);
 //                System.out.println(resSegment);
 
                 return resSegment;
@@ -114,7 +117,7 @@ public class SliceController {
                 resSegment.setSubtitleSuffix(listTask.get(0).getSubtitleSuffix());
                 resSegment.setFilmSize(listTask.get(0).getFilmSize());
                 resSegment.setDoubanId(listTask.get(0).getDoubanId());
-
+                resSegment.setWhetherClimb(listTask.get(0).getWhetherClimb());
                 return resSegment;
             }
         }else {
@@ -128,6 +131,7 @@ public class SliceController {
     public ResData taskComplete(@RequestBody ReqSliceServer reqSliceServer){
         ResData resData = new ResData();
         resData.setCode(0);
+        System.out.println("轮询");
         Integer id = reqSliceServer.getCode();
         String filmId = reqSliceServer.getFilmId();
         System.out.println(reqSliceServer);
@@ -273,9 +277,7 @@ public class SliceController {
                 uploadFail(reqSliceServer);
                 break;
             case 1212:
-
                 reptile(reqSliceServer,resData1);
-                FilmInfo filmInfo = new FilmInfo();
 
                 break;
         }
@@ -550,8 +552,8 @@ public class SliceController {
         }
     }
     private void uploadDecide(SegmentUploadState segmentUploadState,String code,TaskManager taskManager,MinioBackMessage minioBackMessage,ReqSliceServer reqSliceServer) {
-        MinioBackMessage minioBackMessage1 = GsonUtils.fromJson(GsonUtils.toJson(reqSliceServer.getData()),MinioBackMessage.class);
-
+        MinioBackMessage minioBackMessage1 = GsonUtils.fromJson(GsonUtils.toJson(reqSliceServer.getData()), MinioBackMessage.class);
+        System.out.println(minioBackMessage1);
         String newCode = "";
         if (code.equals("6013")) {
             newCode = "6003";
@@ -567,14 +569,14 @@ public class SliceController {
 
             if (segmentUploadState.getSegmentUpload().contains(newCode)) {
 
-                if (segmentUploadState.getSegmentUpload().contains(",")){
+                if (segmentUploadState.getSegmentUpload().contains(",")) {
 
-                    if (segmentUploadState.getSegmentUpload().contains(","+newCode)){
-                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(","+newCode,""));
-                    }else if (segmentUploadState.getSegmentUpload().contains(newCode+",")){
-                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(newCode+",",""));
+                    if (segmentUploadState.getSegmentUpload().contains("," + newCode)) {
+                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace("," + newCode, ""));
+                    } else if (segmentUploadState.getSegmentUpload().contains(newCode + ",")) {
+                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(newCode + ",", ""));
                     }
-                }else {
+                } else {
 //
                     segmentUploadState.setSegmentUpload("");
                 }
@@ -582,27 +584,27 @@ public class SliceController {
 
             segmentUploadState.setSegmentUploadComplete(code);
 
-        }else {
+        } else {
 
             if (segmentUploadState.getSegmentUpload().contains(newCode)) {
 
-                if (segmentUploadState.getSegmentUpload().contains(",")){
+                if (segmentUploadState.getSegmentUpload().contains(",")) {
 
-                    if (segmentUploadState.getSegmentUpload().contains(","+newCode)){
-                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(","+newCode,""));
-                    }else if (segmentUploadState.getSegmentUpload().contains(newCode+",")){
-                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(newCode+",",""));
+                    if (segmentUploadState.getSegmentUpload().contains("," + newCode)) {
+                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace("," + newCode, ""));
+                    } else if (segmentUploadState.getSegmentUpload().contains(newCode + ",")) {
+                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(newCode + ",", ""));
                     }
-                }else {
+                } else {
 //
                     segmentUploadState.setSegmentUpload("");
                 }
             }
 
-            if (segmentUploadState.getSegmentUploadComplete().equals("")){
+            if (segmentUploadState.getSegmentUploadComplete().equals("")) {
                 segmentUploadState.setSegmentUploadComplete(code);
-            }else {
-                segmentUploadState.setSegmentUploadComplete(segmentUploadState.getSegmentUploadComplete()+","+code);
+            } else {
+                segmentUploadState.setSegmentUploadComplete(segmentUploadState.getSegmentUploadComplete() + "," + code);
             }
         }
         String resolvingPower = "";
@@ -615,49 +617,11 @@ public class SliceController {
         } else if (code.equals("6015")) {
             resolvingPower = "320";
         }
-        List<UploadUrl> listUpload = new ArrayList<>();
-        if (taskManager.getMinioUrl().equals("")){
-            UploadUrl uploadUrl = new UploadUrl();
-            uploadUrl.setResolving(resolvingPower);
 
-            uploadUrl.setUrl(minioBackMessage1.getUrl());
-
-            listUpload.add(uploadUrl);
-            taskManager.setMinioUrl(GsonUtils.toJson(listUpload));
-
-
-            System.out.println("爱发发发发"+taskManager);
-        }else {
-
-            System.out.println("解析失败");
-            Gson gson = new Gson();
-            List<UploadUrl> list = gson.fromJson(taskManager.getMinioUrl(), new TypeToken<List<UploadUrl>>() {
-            }.getType());
-
-            UploadUrl uploadUrl = new UploadUrl();
-            uploadUrl.setUrl(minioBackMessage1.getUrl());
-            uploadUrl.setResolving(resolvingPower);
-            list.add(uploadUrl);
-
-            System.out.println(list);
-
-////            UploadUrl uploadUrl = GsonUtils.fromJson(taskManager.getMinioUrl(), UploadUrl.class);
-////            listUpload.add(uploadUrl);
-////
-////            UploadUrl uploadUrl1 = new UploadUrl();
-////
-////            uploadUrl1.setResolving(resolvingPower);
-////            uploadUrl1.setUrl(minioBackMessage1.getUrl());
-////            listUpload.add(uploadUrl1);
-            taskManager.setMinioUrl(GsonUtils.toJson(list));
-
-        }
         taskManager.setUploadState(GsonUtils.toJson(segmentUploadState));
-        taskManager.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
+        taskManager.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
         System.out.println(taskManager);
-        taskManagerService.updateUploadState(taskManager.getFilmId(),taskManager);
-
-//        filmInfoService.selectById();
+        taskManagerService.updateUploadState(taskManager.getFilmId(), taskManager);
 
         if (minioId.contains(",")) {
             String[] split = minioId.split(",");
@@ -675,9 +639,6 @@ public class SliceController {
             }
         }
 
-        SegmentUploadState segmentUploadState1 = GsonUtils.fromJson(String.valueOf(taskManager.getUploadState()), segmentUploadState.getClass());
-
-
         //原本的filmSize
         double filmSize = Double.valueOf(minioBackMessage1.getOriginalSize());
 
@@ -688,56 +649,84 @@ public class SliceController {
 
         minioInfoService.updateMinio(minioInfo, minioInfo.getId());
 
-        String resolvingPower1 = taskManager.getResolvingPower();
-        String str = "";
 
-//        if (segmentUploadState1.getSegmentUploadComplete().equals(code)) {
-            TaskManager taskManager1 = taskManagerService.selectByFilmId(taskManager.getFilmId());
-        System.out.println(taskManager1);
-            VisitUrl visitUrl = newVisitUrl(taskManager1);
-            VisitUrl visitUrl1 = visitService.selectByFilmId(visitUrl.getFilmId());
-            if (visitUrl1 == null){
 
-                visitService.insertVisitUrl(visitUrl);
-            }else {
+        List<UploadUrl> urlList = new ArrayList<>();
+        UploadUrl uploadUrl2 = new UploadUrl();
+        uploadUrl2.setResolving(resolvingPower);
+        uploadUrl2.setUrl(minioBackMessage1.getUrl());
+        urlList.add(uploadUrl2);
 
-                visitUrl.setMinioUrl(taskManager1.getMinioUrl());
-                visitService.updateFilmId(taskManager1.getFilmId(),visitUrl);
-            }
+        VisitUrl visitUrl = newVisitUrl(taskManager,urlList);
+        VisitUrl visitUrl1 = visitService.selectByFilmId(visitUrl.getFilmId());
+
+//        Integer id = null;
+        if (visitUrl1.getMinioUrl().equals("")) {
+            System.out.println(visitUrl.getMinioUrl());
+            List<UploadUrl> uploadUrls = new ArrayList<>();
+
+            UploadUrl uploadUrl = new UploadUrl();
+            uploadUrl.setResolving(resolvingPower);
+            uploadUrl.setUrl(minioBackMessage1.getUrl());
+            uploadUrls.add(uploadUrl);
+            visitUrl1.setMinioUrl(GsonUtils.toJson(uploadUrls));
+            visitUrl1.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
+            visitService.updateFilmId(visitUrl.getFilmId(),visitUrl1);
+        } else {
+
+            System.out.println(visitUrl1.getMinioUrl());
+
+            List<UploadUrl> uploadUrlList = gson.fromJson(visitUrl1.getMinioUrl(), new TypeToken<List<UploadUrl>>() {
+            }.getType());
+
+            UploadUrl uploadUrl = new UploadUrl();
+            uploadUrl.setResolving(resolvingPower);
+            uploadUrl.setUrl(minioBackMessage1.getUrl());
+
+            uploadUrlList.add(uploadUrl);
+
+            visitUrl.setMinioUrl(GsonUtils.toJson(uploadUrlList));
+            visitService.updateFilmId(taskManager.getFilmId(), visitUrl);
+        }
 
 
 //            filmSourceRecord.setVisitUrlId(String.valueOf());
-            FilmSourceRecord film = filmSourceService.findFilm(taskManager1.getFilmId());
-            if (film == null){
-                System.out.println("插入偏远比爱");
-                FilmSourceRecord filmSourceRecord = newFilmSourceRecord(taskManager1, resolvingPower1);
+        FilmSourceRecord film = filmSourceService.findFilm(taskManager.getFilmId());
+        if (film == null) {
+            System.out.println("插入偏远比爱");
 
-                IPage<FilmInfo> infoIPage = filmInfoService.selectByFilmName(taskManager1.getFilmName());
-                VisitUrl visitUrl2 = visitService.selectByFilmId(visitUrl.getFilmId());
+            FilmSourceRecord filmSourceRecord = newFilmSourceRecord(taskManager);
+            IPage<FilmInfo> infoIPage = filmInfoService.selectByDouBanId(taskManager.getDoubanId());
 
-                filmSourceRecord.setVisitUrlId(String.valueOf(visitUrl2.getId()));
 
-                List<FilmInfo> filmInfos = infoIPage.getRecords();
-                filmInfos.get(0).setWhetherUpload("1");
-                filmInfoService.updateByFilmInfoId(filmInfos.get(0));
-                filmSourceRecord.setFilmInfoId(filmInfos.get(0).getId());
-                filmSourceService.addFilmSource(filmSourceRecord);
-            }
+//            IPage<FilmInfo> infoIPage = filmInfoService.selectByFilmName(taskManager.getFilmName());
+//            VisitUrl visitUrl2 = visitService.selectByFilmId(visitUrl.getFilmId());
+
+            List<FilmInfo> filmInfos = infoIPage.getRecords();
+
+            filmInfos.get(0).setWhetherUpload("1");
+            filmInfoService.updateByFilmInfoId(filmInfos.get(0));
+
+
+            filmSourceRecord.setVisitUrlId(String.valueOf(visitUrl1.getId()));
+            filmSourceRecord.setFilmInfoId(filmInfos.get(0).getId());
+            filmSourceService.addFilmSource(filmSourceRecord);
+        }
 
 //        }
 
     }
-    public static VisitUrl newVisitUrl(TaskManager taskManager){
+    public static VisitUrl newVisitUrl(TaskManager taskManager,List<UploadUrl> list){
         VisitUrl visitUrl = new VisitUrl();
         visitUrl.setCdnUrl("");
         visitUrl.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
         visitUrl.setFilmId(taskManager.getFilmId());
-        visitUrl.setMinioUrl(taskManager.getMinioUrl());
+        visitUrl.setMinioUrl(GsonUtils.toJson(list));
         visitUrl.setFilmId(taskManager.getFilmId());
         visitUrl.setNginxUrl("");
         return  visitUrl;
     }
-    public static FilmSourceRecord newFilmSourceRecord(TaskManager taskManager,String str){
+    public static FilmSourceRecord newFilmSourceRecord(TaskManager taskManager){
         FilmSourceRecord filmSourceRecord = new FilmSourceRecord();
         filmSourceRecord.setBtUrl(taskManager.getBtUrl());
         filmSourceRecord.setCreateTime(String.valueOf(System.currentTimeMillis() / 1000));
@@ -745,7 +734,7 @@ public class SliceController {
         filmSourceRecord.setFilmName(taskManager.getFilmName());
 
         filmSourceRecord.setSubtitleUrl(taskManager.getSubtitleUrl());
-        filmSourceRecord.setResolvingPower(str);
+        filmSourceRecord.setResolvingPower(taskManager.getResolvingPower());
 //            filmSourceRecord.setMinioUrl(taskManager1.getMinioUrl());
         filmSourceRecord.setUpdateTime("");
         filmSourceRecord.setLanguageId(taskManager.getLanguageId());
@@ -788,20 +777,30 @@ public class SliceController {
         }
 
     }
-    private void reptile(ReqSliceServer reqSliceServer,ResData res){
-        FilmInfo filmInfo = GsonUtils.fromJson(String.valueOf(reqSliceServer.getData()), FilmInfo.class);
+    private void reptile(ReqSliceServer reqSliceServer,ResData res) {
+
+        System.out.println("麻烦噶事噶A股很尴尬"+reqSliceServer.getData());
+
+        FilmInfo filmInfo = GsonUtils.fromJson(reqSliceServer.getData().toString(), FilmInfo.class);
         TaskManager taskManager = taskManagerService.selectByFilmId(reqSliceServer.getFilmId());
 
-        filmInfoService.insertFilmInfo(filmInfo);
+//        filmInfoService.insertFilmInfo(filmInfo);
+        System.out.println("爬虫成功进来了");
+        IPage<FilmInfo> infoIPage = filmInfoService.selectByDouBanId(String.valueOf(filmInfo.getDoubanId()));
+        List<FilmInfo> filmInfos = infoIPage.getRecords();
 
-        IPage<FilmInfo> infoIPage = filmInfoService.selectByFilmName(taskManager.getFilmName());
-        List<FilmInfo> filmInfos = new ArrayList<>();
+        if (filmInfos.size() == 0) {
+            System.out.println(filmInfo);
+            filmInfo.setWhetherUpload("0");
+            filmInfoService.insertFilmInfo(filmInfo);
+        }
+//        if (filmInfos.size() > 0) {
+//
+//        } else {
+//            System.out.println("爬取的数据为:" + filmInfo);
+//            filmInfoService.insertFilmInfo(filmInfo);
+//        }
 
-        filmInfo = filmInfos.get(0);
-
-        res.setCode(1);
-        res.setMsg("");
-        res.setData(filmInfo);
     }
 
 

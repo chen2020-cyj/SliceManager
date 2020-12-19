@@ -41,6 +41,10 @@ public class ResSegmentManager {
      */
     private String doubanId;
     /**
+     * 是否需要爬虫
+     */
+    private Integer whetherClimb;
+    /**
      * 桶消息体的  map
      * key ：分辨率名称
      * value： server的list消息体

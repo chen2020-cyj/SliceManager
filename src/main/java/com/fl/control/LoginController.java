@@ -46,7 +46,7 @@ public class LoginController {
         System.out.println(map);
         User login = userService.login(map);
         if (login != null) {
-            if (!login.getPassword().equals("")) {
+
 
                 String token = JwtUtils.sign(login.getId());
                 resToken.setUserId(login.getId());
@@ -69,14 +69,7 @@ public class LoginController {
 
 
                 return gson.toJson(res);
-            } else {
-                res.setCode(1);
-                res.setMsg("err");
-                res.setData("");
 
-
-                return gson.toJson(res);
-            }
         } else {
             res.setCode(1);
             res.setMsg("err");

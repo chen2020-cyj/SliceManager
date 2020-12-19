@@ -6,11 +6,17 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fl.entity.FilmInfo;
 import com.fl.mapper.FilmInfoMapper;
+import com.fl.model.ResFilmInfoMapper;
+import com.fl.model.clientReq.FindAllFilmInfo;
 import com.fl.model.clientReq.FindFilmInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.awt.geom.Area;
 import java.sql.Wrapper;
+import java.time.Year;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -50,13 +56,24 @@ public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
         return filmInfoMapper.selectPage(infoIPage,wrapper);
     }
 
+    /**
+     *
+     * @param map
+     * @return
+     */
+
     public FilmInfo selectByNameAndLanguage(Map<String, String> map) {
         QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
         wrapper.allEq(map);
 
         return filmInfoMapper.selectOne(wrapper);
     }
-
+    public IPage<FilmInfo> selectByDouBanId(String doubanId){
+        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("douban_id",doubanId);
+        IPage<FilmInfo> infoIPage = new Page<>(0,1);
+        return  filmInfoMapper.selectPage(infoIPage,wrapper);
+    }
     /**
      * 根据Id进行查询
      */
@@ -171,5 +188,129 @@ public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
 //        wrapper.eq("id", filmInfo.getId());
         filmInfoMapper.insert(filmInfo);
     }
+    public ResFilmInfoMapper selectMoreCondition(Integer id, String year, FindAllFilmInfo info){
+        QueryWrapper<FilmInfo> queryWrapper = new QueryWrapper<>();
+        switch (id){
+            case 1:
+                queryWrapper.eq("''","").orderByDesc("rating_value");
+                break;
+            case 2:
+                queryWrapper.like("tag",info.getTag()).orderByDesc("rating_value");;
+                break;
+            case 3:
+                if (year.contains(",")){
+                    String[] split = year.split(",");
+                    queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.le("film_year",split[1])).orderByDesc("rating_value");;
+                }else {
+                    queryWrapper.eq("film_year",year).orderByDesc("rating_value");;
+                }
+                break;
+            case 4:
+                if (year.contains(",")){
+                    String[] split = year.split(",");
+                    queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.le("film_year",split[1])).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");;
+                }else {
+                    queryWrapper.eq("film_year",year).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");;
+                }
+                break;
+            case 5:
+                queryWrapper.like("production_country",info.getArea()).orderByDesc("rating_value");;
+                break;
+            case 6:
+                queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");;
+                break;
+            case 7:
+                if (year.contains(",")){
+                    String[] split = year.split(",");
+                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.ge("film_year",split[0])).and(Wrapper->Wrapper.le("film_year",split[1])).orderByDesc("rating_value");;
+                }else {
+                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.eq("film_year",year)).orderByDesc("rating_value");;
+                }
+                break;
+            case 8:
+                if (year.contains(",")){
+                    String[] split = year.split(",");
+                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.ge("film_year",split[0])).and(Wrapper->Wrapper.le("film_year",split[1])).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");;
+                }else {
+                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.eq("film_year",year)).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");;
+                }
+                break;
+        }
+        ResFilmInfoMapper resFilmInfoMapper = new ResFilmInfoMapper();
 
+        resFilmInfoMapper.setCount( filmInfoMapper.selectCount(queryWrapper));
+        IPage<FilmInfo> iPage = new Page<>(info.getPage(),info.getOffset());
+        resFilmInfoMapper.setFilmInfoIPage(filmInfoMapper.selectPage(iPage,queryWrapper));
+//        map.put("iPage",filmInfoMapper.selectPage(iPage,queryWrapper));
+        return resFilmInfoMapper;
+    }
+    public ResFilmInfoMapper selectComplete(Integer id, String year, FindAllFilmInfo info){
+        QueryWrapper<FilmInfo> queryWrapper = new QueryWrapper<>();
+        switch (id){
+            case 1:
+                queryWrapper.eq("''","").and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");
+                break;
+            case 2:
+                queryWrapper.like("tag",info.getTag()).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                break;
+            case 3:
+                if (year.contains(",")){
+                    String[] split = year.split(",");
+                    queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.le("film_year",split[1])).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                }else {
+                    queryWrapper.eq("film_year",year).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                }
+                break;
+            case 4:
+                if (year.contains(",")){
+                    String[] split = year.split(",");
+                    queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.le("film_year",split[1])).and(Wrapper->Wrapper.like("tag",info.getTag())).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                }else {
+                    queryWrapper.eq("film_year",year).and(Wrapper->Wrapper.like("tag",info.getTag())).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                }
+                break;
+            case 5:
+                queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                break;
+            case 6:
+                queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.like("tag",info.getTag())).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                break;
+            case 7:
+                if (year.contains(",")){
+                    String[] split = year.split(",");
+                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.ge("film_year",split[0])).and(Wrapper->Wrapper.le("film_year",split[1])).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                }else {
+                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.eq("film_year",year)).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                }
+                break;
+            case 8:
+                if (year.contains(",")){
+                    String[] split = year.split(",");
+                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.ge("film_year",split[0])).and(Wrapper->Wrapper.le("film_year",split[1])).and(Wrapper->Wrapper.like("tag",info.getTag())).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                }else {
+                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.eq("film_year",year)).and(Wrapper->Wrapper.like("tag",info.getTag())).and(Wrapper->Wrapper.eq("whether_upload","1")).orderByDesc("rating_value");;
+                }
+                break;
+        }
+        ResFilmInfoMapper resFilmInfoMapper = new ResFilmInfoMapper();
+
+        resFilmInfoMapper.setCount( filmInfoMapper.selectCount(queryWrapper));
+        IPage<FilmInfo> iPage = new Page<>(info.getPage(),info.getOffset());
+        resFilmInfoMapper.setFilmInfoIPage(filmInfoMapper.selectPage(iPage,queryWrapper));
+//        map.put("iPage",filmInfoMapper.selectPage(iPage,queryWrapper));
+        return resFilmInfoMapper;
+    }
+
+
+    public List<FilmInfo> allFilmInfo(){
+        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("''","");
+
+        return filmInfoMapper.selectList(wrapper);
+    }
+    public void updateInfo(FilmInfo filmInfo){
+//        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
+
+        filmInfoMapper.updateById(filmInfo);
+    }
 }

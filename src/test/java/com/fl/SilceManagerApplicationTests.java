@@ -1,5 +1,6 @@
 package com.fl;
 
+import com.fl.entity.FilmInfo;
 import com.fl.entity.User;
 import com.fl.model.UploadUrl;
 import com.fl.service.FilmInfoService;
@@ -28,13 +29,11 @@ public class SilceManagerApplicationTests {
     @Test
     public void test() {
 
-        String str = "[{\"resolving\":\"720\",\"url\":\"http://162.245.236.170/film/ZsGHknElOh/ZsGHknElOh-32001.m3u8\"}]";
-
-        Gson gson = new Gson();
-        List<UploadUrl> list = gson.fromJson(str, new TypeToken<List<UploadUrl>>() {
-        }.getType());
-        System.out.println(list);
-
+        List<FilmInfo> filmInfos = filmInfoService.allFilmInfo();
+        for (int i =0;i<filmInfos.size();i++){
+            filmInfos.get(i).setWhetherUpload("0");
+            filmInfoService.updateInfo(filmInfos.get(i));
+        }
 
     }
 

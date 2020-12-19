@@ -24,9 +24,9 @@ public class SearchService extends ServiceImpl<SearchMapper, Search> {
 
         return searchMapper.selectList( wrapper);
     }
-    public Search selectByYear(Map<String,String> map){
+    public Search selectByYear(Map<String,String> map,String categoryId){
         QueryWrapper<Search> wrapper = new QueryWrapper<>();
-        wrapper.allEq(map);
+        wrapper.allEq(map).and(i->i.eq("category_id",categoryId));
 
         return searchMapper.selectOne(wrapper);
     }

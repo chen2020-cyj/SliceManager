@@ -9,6 +9,8 @@ import com.fl.entity.TaskManager;
 import com.fl.entity.User;
 import com.fl.mapper.TaskManagerMapper;
 import com.fl.mapper.UserMapper;
+import com.fl.model.ResTaskInfoMapper;
+import com.fl.model.clientReq.FindSegmentTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -45,6 +47,20 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
 
         return taskManagerMapper.selectCount(wrapper);
     }
+    public List<TaskManager> selectByFilmName(Map<String,String> map){
+        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
+        wrapper.allEq(map);
+        return taskManagerMapper.selectList(wrapper);
+    }
+    /**
+     * 查询所有任务
+     */
+    public List<TaskManager> selectAllSegment(){
+        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
+        wrapper.eq("''","");
+
+        return taskManagerMapper.selectList(wrapper);
+    }
     /**
      * 添加新任务
      * @param segment
@@ -59,11 +75,11 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
      * @param
      * @return
      */
-    public TaskManager selectSegmentList(String resolvingPower,String languageId,String filmName){
+    public List<TaskManager> selectSegmentList(String resolvingPower,String languageId,String doubanId){
 
         QueryWrapper<TaskManager> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like("film_name",filmName).and(Wrapper->Wrapper.eq("resolving_power",resolvingPower)).and(Wrapper->Wrapper.eq("language_id",languageId));
-        return taskManagerMapper.selectOne(queryWrapper);
+        queryWrapper.eq("douban_id",doubanId).and(Wrapper->Wrapper.eq("resolving_power",resolvingPower)).and(Wrapper->Wrapper.eq("language_id",languageId));
+        return taskManagerMapper.selectList(queryWrapper);
     }
 
     public TaskManager selectTaskOne(String filmName,String languageId){
@@ -171,16 +187,6 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
 
         taskManagerMapper.update(taskManager,wrapper);
     }
-    /**
-     * 查询任务数量
-     */
-    public Integer selectAllTask(){
-
-        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("''","");
-
-        return taskManagerMapper.selectCount(wrapper);
-    }
 
     /**
      * 查询download_state状态
@@ -250,5 +256,35 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
             return "";
         }
     }
+    /**
+     * 查询所有的任务 多条件
+     */
+    public ResTaskInfoMapper selectAllTaskManager(Integer id, FindSegmentTask task){
+        QueryWrapper<TaskManager> queryWrapper = new QueryWrapper<>();
+        switch (id){
+            case 1:
+                //  downloadState不传 linkState不传 id = 1
+                queryWrapper.eq("''","");
+                break;
+            case 2:
+                // downloadState不传 linkState传 id = 2
+                queryWrapper.eq("link_state",task.getLinkState());
+                break;
+            case 3:
+                // downloadState传 linkState不传 id = 3
+                queryWrapper.eq("download_state",task.getDownloadState());
+                break;
+            case 4:
+                //downloadState传 linkState传 id = 4
+                queryWrapper.eq("download_state",task.getDownloadState()).and(Wrapper->Wrapper.eq("link_state",task.getLinkState()));
+                break;
 
+        }
+        ResTaskInfoMapper resTaskInfoMapper = new ResTaskInfoMapper();
+        resTaskInfoMapper.setCount(taskManagerMapper.selectCount(queryWrapper));
+        IPage<TaskManager> iPage = new Page<>(task.getPage(),task.getOffset());
+        resTaskInfoMapper.setIPage(taskManagerMapper.selectPage(iPage,queryWrapper));
+
+        return resTaskInfoMapper;
+    }
 }

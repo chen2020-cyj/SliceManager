@@ -73,7 +73,7 @@ public class FilmInfo {
     /**
      * 电影全名
      */
-    private String full_name;
+    private String fullName;
     /**
      * 电影是否上传
      */

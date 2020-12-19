@@ -53,7 +53,7 @@ public class OkHttpUtils {
         Elements li = body.select("li");
 
         List<DouBanData> list = new ArrayList<>();
-
+//        System.out.println(body);
         for (int i = 0; i < li.size(); i++) {
             DouBanData douBanData = new DouBanData();
             Element element = li.get(i);

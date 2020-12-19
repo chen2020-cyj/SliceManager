@@ -108,9 +108,9 @@ public class FilmSourceController {
     @PostMapping(value = "/selectAllFilm",produces = "application/json;charset=UTF-8")
     public ResFilmData selectAllFilm(@RequestBody FindAllFilmSource findAllFilmSource){
 
-        Integer page = (findAllFilmSource.getPage()-1)*findAllFilmSource.getOffset();
+
         Integer offset = findAllFilmSource.getOffset();
-        List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectPage(page, offset);
+        List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectPage(findAllFilmSource.getPage(), offset);
 //
 //        User user = userService.selectUserInfo(findAllFilmSource.getUserId());
 //        Long currentTime = System.currentTimeMillis()/1000;
