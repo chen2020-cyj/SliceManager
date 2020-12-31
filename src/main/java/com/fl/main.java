@@ -1,6 +1,7 @@
 package com.fl;
-import com.fl.Agent.AgentUrl;
+
 import com.fl.entity.FilmInfo;
+import com.fl.entity.MinioInfo;
 import com.fl.model.*;
 
 import com.fl.model.clientRes.ReqSliceServer;
@@ -19,73 +20,55 @@ import org.jsoup.select.Elements;
 import java.io.IOException;
 import java.util.*;
 
-import static com.fl.Agent.Agent.getHostPort;
 public class main {
     private static String mess;
 
-    private static AgentUrl hostPort2 = null;
+//    private static AgentUrl hostPort2 = null;
 
     private static final MediaType json = MediaType.parse("application/json; charset=utf-8");
 
     public static void main(String[] args) {
+        OkHttpClient okHttpClient = new OkHttpClient();
+        ReqSliceServer reqSliceServer = new ReqSliceServer();
+// request body
+        MinioBackMessage minioBackMessage = new MinioBackMessage();
+        minioBackMessage.setActualSize("13G");
+        minioBackMessage.setOriginalSize("11");
+        minioBackMessage.setUrl("www.baidu.com");
+        reqSliceServer.setFilmId("ZajQ6OY7Sy");
+        reqSliceServer.setCode(6003);
+        reqSliceServer.setData(GsonUtils.toJson(minioBackMessage));
 
-//        MinioBackMessage minioBackMessage = new MinioBackMessage();
-//        minioBackMessage.setUrl("http://162.245.236.170/film/ZsGHknElOh/ZsGHknElOh-32001.m3u8");
-//        minioBackMessage.setOriginalSize("10.0");
-//        minioBackMessage.setActualSize("2.79G");
-//
-//
-////        "{\"segmentUploadComplete\":\"\",\"segmentUpload\":\"6003,6004\",\"segmentUploadFail\":\"\"}"
-//        ReqSliceServer resData = new ReqSliceServer();
-//        resData.setCode(6004);
-//        resData.setFilmId("SBHKTSilHW");
-//        resData.setData(minioBackMessage);
-////        System.out.println(GsonUtils.toJson(resData));
-////        MinioBackMessage minioBackMessage1 = GsonUtils.fromJson(GsonUtils.toJson(resData.getData()), MinioBackMessage.class);
-////        System.out.println(minioBackMessage1);
-//
-//        OkHttpClient client = new OkHttpClient();//创建OkHttpClient对象。
-////        FormBody.Builder formBody = new FormBody.Builder();//创建表单请求体
-//
-//        RequestBody formBody;
-//        formBody = RequestBody.create(json,GsonUtils.toJson(resData));
-//        System.out.println(GsonUtils.toJson(resData));
-//        Request request = new Request.Builder()//创建Request 对象。
-//                .url("http://localhost:8803/deal/taskState")
-//                .post(formBody)//传递请求体
-//                .build();
-////        {"segmentStart":"2001","segmentSuccess":"","segmentFail":""}
-//
-//        client.newCall(request).enqueue(new Callback() {
-//            @Override
-//            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-//
-//            }
-////            {"segmentStart":"2001","segmentSuccess":"2011","segmentFail":""}
-//            @Override
-//            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-//                System.out.println(response.body().string());
-//            }
-//        });
-//        String str = "[{"\0":456,1:654}]";
+        Request request = new Request.Builder().url("http://localhost:8803/deal/taskState")
+                .post(RequestBody.create(json, GsonUtils.toJson(reqSliceServer))).build();
 
-//        Gson gson = new Gson();
+        try (Response response = okHttpClient.newCall(request).execute()) {
+            ResponseBody body = response.body();
+            if (response.isSuccessful()) {
+//                log.info("success:{}", body == null ? "" : body.string());
+            } else {
+//                log.error("error,statusCode={},body={}", response.code(), body == null ? "" : body.string());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+//            for (int j=i+i;j<str.length();j++){
+//                if (str.charAt(i)){
 //
-//        List<String> list = gson.fromJson(str, new TypeToken<List<String>>() {
-//        }.getType());
-//
-//        System.out.println(list);
-//        List<Integer> list = new ArrayList<>();
-//        list.add(1);
-//        list.add(2);
-//        list.add(3);
-//        list.add(4);
-//        list.add(5);
-//
-//        System.out.println(list.subList(5,10));
+//                }
+//            }
+//        }
     }
 
-
+//    public static List<String> select(int k,int[] arr){
+//        List<Integer> list = new ArrayList<>();
+//        for (int i =0;i<arr.length;i++){
+//            list.add(arr[i]);
+//        }
+//        Integer min = Collections.min(list);
+//        System.out.println(min);
+//        return null;
+//    }
 
 
 

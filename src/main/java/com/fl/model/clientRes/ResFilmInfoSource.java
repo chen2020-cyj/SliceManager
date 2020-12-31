@@ -8,6 +8,6 @@ import lombok.Data;
 public class ResFilmInfoSource {
     private FilmInfo filmInfo;
 
-    private ResFilmSource resFilmSource;
+    private Object resFilmSource;
 
 }

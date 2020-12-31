@@ -3,10 +3,7 @@ package com.fl.control;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fl.entity.*;
-import com.fl.model.Msg;
-import com.fl.model.SegmentState;
-import com.fl.model.SegmentUploadState;
-import com.fl.model.UploadUrl;
+import com.fl.model.*;
 import com.fl.model.clientRes.ReqSliceServer;
 import com.fl.model.clientRes.ResData;
 import com.fl.model.sliceServerReq.BitTorrent;
@@ -46,6 +43,8 @@ public class SliceController {
     private FilmInfoService filmInfoService;
     @Autowired
     private VisitService visitService;
+    @Autowired
+    private NginxManagerService nginxManagerService;
 
     private ResData res = new ResData();
     private Gson gson = new Gson();
@@ -84,7 +83,7 @@ public class SliceController {
                 resSegment.setMsg(serverInfo);
                 resSegment.setFilmSize(listTask.get(0).getFilmSize());
                 resSegment.setDoubanId(listTask.get(0).getDoubanId());
-                resSegment.setWhetherClimb(listTask.get(0).getWhetherClimb());
+                resSegment.setWhetherClimb(0);
                 System.out.println(resSegment);
 //                System.out.println(resSegment);
 
@@ -128,7 +127,9 @@ public class SliceController {
     }
     @ApiOperation("任务轮询更新数据")
     @PostMapping("/taskState")
-    public ResData taskComplete(@RequestBody ReqSliceServer reqSliceServer){
+    public synchronized  ResData taskComplete(@RequestBody ReqSliceServer reqSliceServer){
+
+
         ResData resData = new ResData();
         resData.setCode(0);
         System.out.println("轮询");
@@ -142,46 +143,50 @@ public class SliceController {
             TaskManager taskManager = taskManagerService.selectByFilmId(reqSliceServer.getFilmId());
             BitTorrent bitTorrent = GsonUtils.fromJson(String.valueOf(reqSliceServer.getData()), BitTorrent.class);
 
-
-
             BtDownLoad btDownLoad = btDownLoadService.selectByFilmId(reqSliceServer.getFilmId());
             if (btDownLoad == null){
                 BtDownLoad bt = new BtDownLoad();
                 bt.setFilmId(reqSliceServer.getFilmId());
                 bt.setBtState(bitTorrent.getDone());
                 bt.setStartTime(String.valueOf(System.currentTimeMillis()/1000));
-
+                TaskManager taskManager1 = taskManagerService.selectByFilmId(reqSliceServer.getFilmId());
+                taskManager1.setDownloadState("2");
+                taskManagerService.updateUploadState(reqSliceServer.getFilmId(),taskManager1);
                 btDownLoadService.insertBtDownLoad(bt);
+
+                res.setCode(0);
+                res.setMsg("ok");
+                res.setData("");
+                return res;
+
             }else {
                 if (btDownLoad.getBtState().equals(bitTorrent.getDone())){
                     long currentTime = System.currentTimeMillis()/1000;
                     long startTime =Long.valueOf(btDownLoad.getStartTime());
 
                     long time = currentTime - startTime;
-                    if (time> JwtUtils.EXPIRE_TIME){
-                        resData.setCode(2);
+                    if (time> (60*10)){
+                        resData.setCode(1);
                         resData.setMsg("任务超时");
-                        resData.setData(btDownLoad);
+                        resData.setData(GsonUtils.toJson(btDownLoad));
 
                         taskManagerService.updateIdLinkState(filmId,"1003");
                         return resData;
-                    }else {
-
                     }
                 }else {
                     btDownLoad.setStartTime(String.valueOf(System.currentTimeMillis()/1000));
                     btDownLoad.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
 
-                    resData.setCode(1);
+                    resData.setCode(2);
                     resData.setMsg("任务可以继续下载");
-                    resData.setData(btDownLoad);
+                    resData.setData(GsonUtils.toJson(btDownLoad));
 
                     btDownLoadService.updateBtDownLoad(btDownLoad.getFilmId(),btDownLoad);
 
-                    return res;
+                    return resData;
                 }
             }
-            return  res;
+//            return  res;
         }
         reqTaskState(id,filmId,state,reqSliceServer,resData);
 
@@ -194,8 +199,6 @@ public class SliceController {
         res.setCode(0);
         res.setMsg("ok");
         res.setData("");
-
-
 
         return res;
     }
@@ -290,6 +293,10 @@ public class SliceController {
     private void segmentStart(ReqSliceServer reqSliceServer) {
         System.out.println("adadadahfhgfhgg");
         TaskManager taskManager = taskManagerService.selectByFilmId(reqSliceServer.getFilmId());
+        if (!taskManager.getDownloadState().equals("3")){
+            taskManager.setDownloadState("3");
+            taskManagerService.updateUploadState(taskManager.getFilmId(),taskManager);
+        }
         String segmentState = String.valueOf(taskManager.getSegmentState());
         System.out.println("切片状态"+segmentState);
         String code = String.valueOf(reqSliceServer.getCode());
@@ -380,37 +387,56 @@ public class SliceController {
                     segmentState.setSegmentStart("");
                 }
             }
+//            if (segmentState.getSegmentSuccess().equals("")){
+//                segmentState.setSegmentSuccess(code);
+//            }else {
+//                if (segmentState.getSegmentSuccess().contains(code)){
+//
+//                }else {
+                    segmentState.setSegmentSuccess(code);
+//                }
+//            }
 
-            segmentState.setSegmentSuccess(code);
+
         }else {
 //            System.out.println("下层判断");
-            if (segmentState.getSegmentSuccess().contains(code)){
+            if (segmentState.getSegmentSuccess().contains(code)) {
 //                System.out.println("afafafhggggggg");
                 System.out.println(segmentState);
-            }else {
+            } else {
 
                 String str = "";
-                if (code.equals("2011")){
+                if (code.equals("2011")) {
                     str = "2001";
-                }else if (code.equals("2012")){
+                } else if (code.equals("2012")) {
                     str = "2002";
-                }else if (code.equals("2013")){
+                } else if (code.equals("2013")) {
                     str = "2003";
                 }
-                if (segmentState.getSegmentStart().contains(",")){
-                    if (segmentState.getSegmentStart().contains(","+str)) {
-                        segmentState.setSegmentStart(segmentState.getSegmentStart().replace(","+str,""));
-                    }else if (segmentState.getSegmentStart().contains(str+",")){
-                        segmentState.setSegmentStart(segmentState.getSegmentStart().replace(str+",",""));
+                if (segmentState.getSegmentStart().contains(",")) {
+                    if (segmentState.getSegmentStart().contains("," + str)) {
+                        segmentState.setSegmentStart(segmentState.getSegmentStart().replace("," + str, ""));
+                    } else if (segmentState.getSegmentStart().contains(str + ",")) {
+                        segmentState.setSegmentStart(segmentState.getSegmentStart().replace(str + ",", ""));
                     }
-                }else {
-                    if (segmentState.getSegmentStart().equals(str)){
+                } else {
+                    if (segmentState.getSegmentStart().equals(str)) {
                         segmentState.setSegmentStart("");
                     }
-                    System.out.println("切片状态"+segmentState);
+                    System.out.println("切片状态" + segmentState);
                 }
 
-                segmentState.setSegmentSuccess(segmentState.getSegmentSuccess()+","+code);
+
+                if (segmentState.getSegmentSuccess().equals("")) {
+                    segmentState.setSegmentSuccess(code);
+                } else {
+                    if (segmentState.getSegmentSuccess().contains(code)) {
+
+                    } else {
+                        segmentState.setSegmentSuccess(segmentState.getSegmentSuccess() + "," + code);
+                    }
+                }
+
             }
         }
 //
@@ -476,7 +502,7 @@ public class SliceController {
         TaskManager taskManager = taskManagerService.selectByFilmId(reqSliceServer.getFilmId());
         String uploadState = String.valueOf(taskManager.getUploadState());
         String code = String.valueOf(reqSliceServer.getCode());
-        if (reqSliceServer.getData().equals("") || reqSliceServer.getData() == null){
+        if (reqSliceServer.getData().equals("")){
 //            System.out.println("上传状态");
             if (!uploadState.equals("")){
                 SegmentUploadState segmentUploadState = GsonUtils.fromJson(uploadState, SegmentUploadState.class);
@@ -516,13 +542,41 @@ public class SliceController {
                 segmentUploadState.setSegmentUploadFail("");
                 switch (code){
                     case "6003":
+//                        segmentUploadState.setSegmentUpload(code);
+//                        if (segmentUploadState.getSegmentUpload().equals("")){
+//                            segmentUploadState.setSegmentUpload(code);
+//                        }else {
+//                            if (segmentUploadState.getSegmentUpload().contains(code)){
+//
+//                            }else {
+//                                segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload()+","+code);
+//                            }
+//                        }
                         segmentUploadState.setSegmentUpload(code);
                         break;
                     case "6004":
                         segmentUploadState.setSegmentUpload(code);
+//                        if (segmentUploadState.getSegmentUpload().equals("")){
+//                            segmentUploadState.setSegmentUpload(code);
+//                        }else {
+//                            if (segmentUploadState.getSegmentUpload().contains(code)){
+//
+//                            }else {
+//                                segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload()+","+code);
+//                            }
+//                        }
                         break;
                     case "6005":
                         segmentUploadState.setSegmentUpload(code);
+//                        if (segmentUploadState.getSegmentUpload().equals("")){
+//                            segmentUploadState.setSegmentUpload(code);
+//                        }else {
+//                            if (segmentUploadState.getSegmentUpload().contains(code)){
+//
+//                            }else {
+//
+//                            }
+//                        }
                         break;
                 }
                 taskManager.setUploadState(GsonUtils.toJson(segmentUploadState));
@@ -552,8 +606,9 @@ public class SliceController {
         }
     }
     private void uploadDecide(SegmentUploadState segmentUploadState,String code,TaskManager taskManager,MinioBackMessage minioBackMessage,ReqSliceServer reqSliceServer) {
-        MinioBackMessage minioBackMessage1 = GsonUtils.fromJson(GsonUtils.toJson(reqSliceServer.getData()), MinioBackMessage.class);
-        System.out.println(minioBackMessage1);
+        System.out.println("案发发个广告"+minioBackMessage);
+//        MinioBackMessage minioBackMessage1 = GsonUtils.fromJson(GsonUtils.toJson(reqSliceServer.getData()), MinioBackMessage.class);
+//        System.out.println(minioBackMessage1);
         String newCode = "";
         if (code.equals("6013")) {
             newCode = "6003";
@@ -563,50 +618,71 @@ public class SliceController {
             newCode = "6005";
         }
 
+        if (segmentUploadState.getSegmentUploadComplete().equals("")){
+            if (segmentUploadState.getSegmentUpload().contains(newCode)){
+                if (segmentUploadState.getSegmentUpload().contains(",")){
+                    if (segmentUploadState.getSegmentUpload().contains(","+newCode)){
+                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(","+newCode,""));
+                    }else if (segmentUploadState.getSegmentUpload().contains(newCode+",")){
+                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(newCode+",",""));
 
-        if (segmentUploadState.getSegmentUploadComplete().equals("")) {
-
-
-            if (segmentUploadState.getSegmentUpload().contains(newCode)) {
-
-                if (segmentUploadState.getSegmentUpload().contains(",")) {
-
-                    if (segmentUploadState.getSegmentUpload().contains("," + newCode)) {
-                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace("," + newCode, ""));
-                    } else if (segmentUploadState.getSegmentUpload().contains(newCode + ",")) {
-                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(newCode + ",", ""));
                     }
-                } else {
-//
+                }else {
                     segmentUploadState.setSegmentUpload("");
                 }
             }
-
             segmentUploadState.setSegmentUploadComplete(code);
+        }else {
 
-        } else {
-
-            if (segmentUploadState.getSegmentUpload().contains(newCode)) {
-
-                if (segmentUploadState.getSegmentUpload().contains(",")) {
-
-                    if (segmentUploadState.getSegmentUpload().contains("," + newCode)) {
-                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace("," + newCode, ""));
-                    } else if (segmentUploadState.getSegmentUpload().contains(newCode + ",")) {
-                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(newCode + ",", ""));
-                    }
-                } else {
-//
-                    segmentUploadState.setSegmentUpload("");
-                }
-            }
-
-            if (segmentUploadState.getSegmentUploadComplete().equals("")) {
-                segmentUploadState.setSegmentUploadComplete(code);
-            } else {
-                segmentUploadState.setSegmentUploadComplete(segmentUploadState.getSegmentUploadComplete() + "," + code);
-            }
         }
+//        if (segmentUploadState.getSegmentUploadComplete().equals("")) {
+//
+//
+//            if (segmentUploadState.getSegmentUpload().contains(newCode)) {
+//
+//                if (segmentUploadState.getSegmentUpload().contains(",")) {
+//
+//                    if (segmentUploadState.getSegmentUpload().contains("," + newCode)) {
+//                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace("," + newCode, ""));
+//                    } else if (segmentUploadState.getSegmentUpload().contains(newCode + ",")) {
+//                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(newCode + ",", ""));
+//                    }
+//                } else {
+////
+//                    segmentUploadState.setSegmentUpload("");
+//                }
+//            }
+//
+//            segmentUploadState.setSegmentUploadComplete(code);
+//
+//        } else {
+//
+//            if (segmentUploadState.getSegmentUpload().contains(newCode)) {
+//
+//                if (segmentUploadState.getSegmentUpload().contains(",")) {
+//
+//                    if (segmentUploadState.getSegmentUpload().contains("," + newCode)) {
+//                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace("," + newCode, ""));
+//                    } else if (segmentUploadState.getSegmentUpload().contains(newCode + ",")) {
+//                        segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload().replace(newCode + ",", ""));
+//                    }
+//                } else {
+////
+//                    segmentUploadState.setSegmentUpload("");
+//                }
+//            }
+//
+//            if (segmentUploadState.getSegmentUploadComplete().equals("")) {
+//                segmentUploadState.setSegmentUploadComplete(code);
+//            } else {
+//                if (segmentUploadState.getSegmentUploadComplete().equals(code)){
+//
+//                }else {
+//                    segmentUploadState.setSegmentUploadComplete(segmentUploadState.getSegmentUploadComplete() + "," + code);
+//                }
+//
+//            }
+//        }
         String resolvingPower = "";
         String minioId = taskManager.getMinioId();
         MinioInfo minioInfo = new MinioInfo();
@@ -617,7 +693,7 @@ public class SliceController {
         } else if (code.equals("6015")) {
             resolvingPower = "320";
         }
-
+        Integer newMinioId = 0;
         taskManager.setUploadState(GsonUtils.toJson(segmentUploadState));
         taskManager.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
         System.out.println(taskManager);
@@ -630,20 +706,22 @@ public class SliceController {
                 MinioInfo minio = minioInfoService.findMinio(Integer.valueOf(split[i]));
                 if (minio.getResolvingPower().equals(resolvingPower)) {
                     minioInfo = minio;
+                    newMinioId = minioInfo.getId();
                 }
             }
         } else {
             MinioInfo minio = minioInfoService.findMinio(Integer.valueOf(minioId));
             if (minio.getResolvingPower().equals(resolvingPower)) {
                 minioInfo = minio;
+                newMinioId = minioInfo.getId();
             }
         }
-
+        System.out.println("解析出来的消息"+minioBackMessage);
         //原本的filmSize
-        double filmSize = Double.valueOf(minioBackMessage1.getOriginalSize());
+        double filmSize = Double.valueOf(minioBackMessage.getOriginalSize());
 
         //应该要减去的大小
-        double actualSize = Double.valueOf(turnGB(minioBackMessage1.getActualSize()));
+        double actualSize = Double.valueOf(turnGB(minioBackMessage.getActualSize()));
         minioInfo.setAvailableCapacity(minioInfo.getAvailableCapacity() + filmSize - actualSize);
         minioInfo.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
 
@@ -652,39 +730,68 @@ public class SliceController {
 
 
         List<UploadUrl> urlList = new ArrayList<>();
-        UploadUrl uploadUrl2 = new UploadUrl();
-        uploadUrl2.setResolving(resolvingPower);
-        uploadUrl2.setUrl(minioBackMessage1.getUrl());
-        urlList.add(uploadUrl2);
+        UploadUrl uploadUrl = uploadUrl(resolvingPower, minioBackMessage.getUrl());
+        urlList.add(uploadUrl);
 
         VisitUrl visitUrl = newVisitUrl(taskManager,urlList);
-        VisitUrl visitUrl1 = visitService.selectByFilmId(visitUrl.getFilmId());
+        VisitUrl visitUrl1 = visitService.selectByDouBanId(visitUrl.getDoubanId());
 
-//        Integer id = null;
         if (visitUrl1.getMinioUrl().equals("")) {
-            System.out.println(visitUrl.getMinioUrl());
+            List<NginxUrlInfo> nginxUrlInfoList = new ArrayList<>();
+//            NginxUrlInfo nginxUrlInfo = new NginxUrlInfo();
+//            nginxUrlInfo.setResolving(uploadUrl.getResolving());
+//
+//            NginxManager nginxManager = nginxManagerService.selectByMinioId(newMinioId);
+
+//            String nginxUrl = newNginxUrl(minioBackMessage.getUrl(),nginxManager.getNginxUrl());
+//            nginxUrlInfo.setUrl(nginxUrl);
+//            nginxUrlInfoList.add(nginxUrlInfo);
             List<UploadUrl> uploadUrls = new ArrayList<>();
 
-            UploadUrl uploadUrl = new UploadUrl();
-            uploadUrl.setResolving(resolvingPower);
-            uploadUrl.setUrl(minioBackMessage1.getUrl());
-            uploadUrls.add(uploadUrl);
+            UploadUrl uploadUrl1 = uploadUrl(resolvingPower, minioBackMessage.getUrl());
+
+            uploadUrls.add(uploadUrl1);
+            visitUrl1.setNginxUrl(GsonUtils.toJson(nginxUrlInfoList));
             visitUrl1.setMinioUrl(GsonUtils.toJson(uploadUrls));
             visitUrl1.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
-            visitService.updateFilmId(visitUrl.getFilmId(),visitUrl1);
+            visitService.updateFilmId(visitUrl.getDoubanId(),visitUrl1);
         } else {
+            UploadUrl uploadUrl1 = new UploadUrl();
+//            NginxUrlInfo nginxUrlInfo = new NginxUrlInfo();
 
             System.out.println(visitUrl1.getMinioUrl());
+
+//            NginxManager nginxManager = nginxManagerService.selectByMinioId(newMinioId);
 
             List<UploadUrl> uploadUrlList = gson.fromJson(visitUrl1.getMinioUrl(), new TypeToken<List<UploadUrl>>() {
             }.getType());
 
-            UploadUrl uploadUrl = new UploadUrl();
-            uploadUrl.setResolving(resolvingPower);
-            uploadUrl.setUrl(minioBackMessage1.getUrl());
 
+            List<NginxUrlInfo> nginxUrlInfoList = gson.fromJson(visitUrl1.getNginxUrl(), new TypeToken<List<NginxUrlInfo>>() {
+            }.getType());
+
+//            for (int i = 0;i<nginxUrlInfoList.size();i++){
+//                if (nginxUrlInfoList.get(i).getResolving().equals(resolvingPower)){
+//                    nginxUrlInfoList.get(i).setUrl(minioBackMessage.getUrl());
+//                }else {
+//                    String nginxUrl = newNginxUrl(minioBackMessage.getUrl(), nginxManager.getNginxUrl());
+//                    nginxUrlInfo.setResolving(resolvingPower);
+//                    nginxUrlInfo.setUrl(nginxUrl);
+//                }
+//            }
+
+            for (int i = 0; i < uploadUrlList.size(); i++) {
+                if (uploadUrlList.get(i).getResolving().equals(resolvingPower)){
+                    uploadUrlList.get(i).setUrl(minioBackMessage.getUrl());
+                }else {
+
+                    uploadUrl1.setResolving(resolvingPower);
+                    uploadUrl1.setUrl(minioBackMessage.getUrl());
+                }
+            }
+//            nginxUrlInfoList.add(nginxUrlInfo);
             uploadUrlList.add(uploadUrl);
-
+            visitUrl.setNginxUrl(GsonUtils.toJson(nginxUrlInfoList));
             visitUrl.setMinioUrl(GsonUtils.toJson(uploadUrlList));
             visitService.updateFilmId(taskManager.getFilmId(), visitUrl);
         }
@@ -693,14 +800,9 @@ public class SliceController {
 //            filmSourceRecord.setVisitUrlId(String.valueOf());
         FilmSourceRecord film = filmSourceService.findFilm(taskManager.getFilmId());
         if (film == null) {
-            System.out.println("插入偏远比爱");
-
             FilmSourceRecord filmSourceRecord = newFilmSourceRecord(taskManager);
             IPage<FilmInfo> infoIPage = filmInfoService.selectByDouBanId(taskManager.getDoubanId());
 
-
-//            IPage<FilmInfo> infoIPage = filmInfoService.selectByFilmName(taskManager.getFilmName());
-//            VisitUrl visitUrl2 = visitService.selectByFilmId(visitUrl.getFilmId());
 
             List<FilmInfo> filmInfos = infoIPage.getRecords();
 
@@ -716,13 +818,21 @@ public class SliceController {
 //        }
 
     }
+    public UploadUrl uploadUrl(String resolvingPower,String uploadUrl){
+        UploadUrl uploadUrl1 = new UploadUrl();
+        uploadUrl1.setResolving(resolvingPower);
+        uploadUrl1.setUrl(uploadUrl);
+
+        return uploadUrl1;
+    }
     public static VisitUrl newVisitUrl(TaskManager taskManager,List<UploadUrl> list){
         VisitUrl visitUrl = new VisitUrl();
         visitUrl.setCdnUrl("");
+        visitUrl.setNginxUrl("");
         visitUrl.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
-        visitUrl.setFilmId(taskManager.getFilmId());
+        visitUrl.setDoubanId(taskManager.getDoubanId());
         visitUrl.setMinioUrl(GsonUtils.toJson(list));
-        visitUrl.setFilmId(taskManager.getFilmId());
+//        visitUrl.setFilmId(taskManager.getFilmId());
         visitUrl.setNginxUrl("");
         return  visitUrl;
     }
@@ -739,6 +849,16 @@ public class SliceController {
         filmSourceRecord.setUpdateTime("");
         filmSourceRecord.setLanguageId(taskManager.getLanguageId());
         return  filmSourceRecord;
+    }
+
+    public String newNginxUrl(String uploadUrl,String nginxUrl){
+
+        Integer id1 = uploadUrl.indexOf("//");
+        Integer id2 = uploadUrl.indexOf("film");
+        String newStr = uploadUrl.substring(id1+2,id2+4);
+        String replace = uploadUrl.replace(newStr, nginxUrl);
+
+        return replace;
     }
     /**
      * 上传失败
@@ -779,8 +899,6 @@ public class SliceController {
     }
     private void reptile(ReqSliceServer reqSliceServer,ResData res) {
 
-        System.out.println("麻烦噶事噶A股很尴尬"+reqSliceServer.getData());
-
         FilmInfo filmInfo = GsonUtils.fromJson(reqSliceServer.getData().toString(), FilmInfo.class);
         TaskManager taskManager = taskManagerService.selectByFilmId(reqSliceServer.getFilmId());
 
@@ -788,11 +906,17 @@ public class SliceController {
         System.out.println("爬虫成功进来了");
         IPage<FilmInfo> infoIPage = filmInfoService.selectByDouBanId(String.valueOf(filmInfo.getDoubanId()));
         List<FilmInfo> filmInfos = infoIPage.getRecords();
+        taskManager.setWhetherClimb(0);
+        taskManager.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
+        taskManagerService.updateUploadState(taskManager.getFilmId(),taskManager);
+
 
         if (filmInfos.size() == 0) {
             System.out.println(filmInfo);
-            filmInfo.setWhetherUpload("0");
+            filmInfo.setWhetherUpload("1");
             filmInfoService.insertFilmInfo(filmInfo);
+        }else {
+
         }
 //        if (filmInfos.size() > 0) {
 //

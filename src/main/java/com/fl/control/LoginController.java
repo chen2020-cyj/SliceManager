@@ -114,22 +114,23 @@ public class LoginController {
     }
     @ApiOperation("刷新token接口")
     @PostMapping(value = "/updateToken",produces = "application/json;charset=UTF-8")
-    public String updateToken(@RequestBody UpdateToken user){
+    public String updateToken(@RequestBody UpdateToken user) {
+
 
         User login = userService.selectUserInfo(user.getUserId());
-//        System.out.println(login);
+
         if (login != null){
             String token = JwtUtils.sign(login.getId());
 
             long currentTime = System.currentTimeMillis();
             login.setToken(token);
-            login.setTokenTime(String.valueOf((currentTime+JwtUtils.EXPIRE_TIME)/1000));
-            login.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
+            login.setTokenTime(String.valueOf((currentTime + JwtUtils.EXPIRE_TIME) / 1000));
+            login.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
             userService.updateToken(login);
 
             resToken.setUserId(login.getId());
             resToken.setToken(token);
-            resToken.setExpiration(String.valueOf((currentTime+JwtUtils.EXPIRE_TIME)/1000));
+            resToken.setExpiration(String.valueOf((currentTime + JwtUtils.EXPIRE_TIME) / 1000));
 
             res.setCode(0);
             res.setMsg("success");
@@ -138,17 +139,17 @@ public class LoginController {
             return gson.toJson(res);
         }else {
             res.setCode(1);
-            res.setMsg("没有对应的数据");
+            res.setMsg("这个id没有对应的数据");
             res.setData("");
+
             return gson.toJson(res);
         }
+
     }
 
     @ApiOperation("修改密码")
     @PostMapping(value = "/revise",produces = "application/json;charset=UTF-8")
     public ResData revise(@RequestBody ReqRevise reqRevise){
-
-
 
         return res;
     }
@@ -172,14 +173,14 @@ public class LoginController {
     @PostMapping(value = "/signOut",produces = "application/json;charset=UTF-8")
     public ResData revise(@RequestBody SignOut signOut){
 
-        Integer userId = JwtUtils.verify(signOut.getToken());
+//        Integer userId = JwtUtils.verify(signOut.getToken());
 
 
 
-        User user = userService.selectUserInfo(userId);
+        User user = userService.selectUserInfo(signOut.getId());
         System.out.println(user);
-        user.setTokenTime(" ");
-        user.setToken(" ");
+        user.setTokenTime("");
+        user.setToken("");
         userService.updateToken(user);
 
         res.setCode(0);

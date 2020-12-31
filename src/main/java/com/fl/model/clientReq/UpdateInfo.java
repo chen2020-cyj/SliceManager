@@ -24,6 +24,5 @@ public class UpdateInfo {
 
     private String tag;
 
-    private MultipartFile file;
 //    private String film
 }

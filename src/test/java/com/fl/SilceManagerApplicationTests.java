@@ -1,14 +1,7 @@
 package com.fl;
 
 import com.fl.entity.FilmInfo;
-import com.fl.entity.User;
-import com.fl.model.UploadUrl;
 import com.fl.service.FilmInfoService;
-import com.fl.service.UserService;
-import com.fl.utils.GsonUtils;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-import jdk.nashorn.internal.parser.TokenType;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,12 +21,16 @@ public class SilceManagerApplicationTests {
 
     @Test
     public void test() {
-
         List<FilmInfo> filmInfos = filmInfoService.allFilmInfo();
-        for (int i =0;i<filmInfos.size();i++){
+        for (int i = 0; i < filmInfos.size(); i++) {
             filmInfos.get(i).setWhetherUpload("0");
+            filmInfos.get(i).setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
             filmInfoService.updateInfo(filmInfos.get(i));
         }
+//        UserTest userTest = new UserTest();
+//        userTest.setName("3543543");
+//        userTestService.insertDDD(userTest);
+
 
     }
 

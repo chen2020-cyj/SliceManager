@@ -1,5 +1,6 @@
 package com.fl.service;
 
+//import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fl.entity.User;
@@ -16,7 +17,7 @@ public class UserService extends ServiceImpl<UserMapper, User> {
     UserMapper userMapper;
 
 
-
+//    @DS("slave_1")
     public User login(Map<String, String> map) {
         QueryWrapper<User> wrapper = new QueryWrapper<>();
 

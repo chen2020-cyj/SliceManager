@@ -9,6 +9,10 @@ public class FindAllFilmSource {
 
     private Integer page;
 
+    private String filmId;
+
+    private String filmInfoId;
+
 //    private String token;
 //
 //    private Integer userId;

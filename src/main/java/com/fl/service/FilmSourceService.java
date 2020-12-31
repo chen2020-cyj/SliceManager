@@ -1,6 +1,7 @@
 package com.fl.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fl.entity.FilmSourceRecord;
@@ -31,9 +32,11 @@ public class FilmSourceService extends ServiceImpl<FilmSourceMapper, FilmSourceR
         FilmSourceRecord filmSourceManager = filmSourceMapper.selectOne(wrapper);
         return filmSourceManager;
     }
-    public List<FilmSourceRecord>  selectPage(int offset, int page){
+    public IPage<FilmSourceRecord> selectPage(int page, int offset){
+        QueryWrapper<FilmSourceRecord> wrapper = new QueryWrapper<>();
+        IPage<FilmSourceRecord> iPage = new Page<>(page,offset);
 
-        return userMapper.selectPage(offset,page);
+        return filmSourceMapper.selectPage(iPage,wrapper);
     }
 
     /**
@@ -44,9 +47,15 @@ public class FilmSourceService extends ServiceImpl<FilmSourceMapper, FilmSourceR
         wrapper.eq("''","");
         return filmSourceMapper.selectCount(wrapper);
     }
-    public FilmSourceRecord selectByFilmInfoId(Integer id){
+    public List<FilmSourceRecord> selectByFilmInfoId(Integer id){
         QueryWrapper<FilmSourceRecord> wrapper = new QueryWrapper<>();
         wrapper.eq("film_info_id",id);
+
+        return filmSourceMapper.selectList(wrapper);
+    }
+    public FilmSourceRecord selectByFilmId(String filmId){
+        QueryWrapper<FilmSourceRecord> wrapper = new QueryWrapper<>();
+        wrapper.eq("film_id",filmId);
 
         return filmSourceMapper.selectOne(wrapper);
     }

@@ -29,7 +29,7 @@ public class VisitUrl {
     /**
      * 对应片源filmId
      */
-    private String filmId;
+    private String doubanId;
 
     private String createTime;
 

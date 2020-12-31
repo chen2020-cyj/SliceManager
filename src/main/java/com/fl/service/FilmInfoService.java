@@ -195,34 +195,35 @@ public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
                 queryWrapper.eq("''","").orderByDesc("rating_value");
                 break;
             case 2:
-                queryWrapper.like("tag",info.getTag()).orderByDesc("rating_value");;
+                queryWrapper.like("tag",info.getTag()).orderByDesc("rating_value");
                 break;
             case 3:
                 if (year.contains(",")){
                     String[] split = year.split(",");
-                    queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.le("film_year",split[1])).orderByDesc("rating_value");;
+                    queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.le("film_year",split[1])).orderByDesc("rating_value");
                 }else {
-                    queryWrapper.eq("film_year",year).orderByDesc("rating_value");;
+                    queryWrapper.eq("film_year",year).orderByDesc("rating_value");
                 }
                 break;
             case 4:
                 if (year.contains(",")){
                     String[] split = year.split(",");
-                    queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.le("film_year",split[1])).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");;
+                    queryWrapper.ge("film_year",split[0]).and(Wrapper->Wrapper.le("film_year",split[1])).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");
                 }else {
                     queryWrapper.eq("film_year",year).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");;
                 }
                 break;
             case 5:
-                queryWrapper.like("production_country",info.getArea()).orderByDesc("rating_value");;
+                System.out.println("546468687687"+"\n"+"54a68765454");
+                queryWrapper.like("production_country",info.getArea()).orderByDesc("rating_value");
                 break;
             case 6:
-                queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");;
+                queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.like("tag",info.getTag())).orderByDesc("rating_value");
                 break;
             case 7:
                 if (year.contains(",")){
                     String[] split = year.split(",");
-                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.ge("film_year",split[0])).and(Wrapper->Wrapper.le("film_year",split[1])).orderByDesc("rating_value");;
+                    queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.ge("film_year",split[0])).and(Wrapper->Wrapper.le("film_year",split[1])).orderByDesc("rating_value");
                 }else {
                     queryWrapper.like("production_country",info.getArea()).and(Wrapper->Wrapper.eq("film_year",year)).orderByDesc("rating_value");;
                 }

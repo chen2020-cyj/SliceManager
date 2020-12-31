@@ -38,6 +38,10 @@ public class MinioInfo {
 
     private double availableCapacity;
     /**
+     * 使用状态
+     */
+    private String usageStatus;
+    /**
      * 创建时间
      */
     private String createTime;

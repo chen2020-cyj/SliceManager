@@ -28,8 +28,8 @@ public class TokenInterceptor implements HandlerInterceptor {
             "/deal/taskState",
             "/deal/token",
             "/deal/distributionTask",
-            "/deal/taskState"
-
+            "/deal/taskState",
+            "/deal/picUpload",
     };
     @Autowired
     private UserService userService;

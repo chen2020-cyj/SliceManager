@@ -3,21 +3,28 @@ server:
   servlet:
     context-path: /deal
 
-http_pool:
-  max_total: 200
-  default_max_per_route: 100
-  connect_timeout: 5000
-  connection_request_timeout: 1000
-  socket_timeout: 65000
-  validate_after_inactivity: 2000
 #\u6570\u636E\u5E93\u914D\u7F6E
 spring:
+#  datasource:
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    url: jdbc:mysql://localhost:3306/abc?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=CTT
+#    username: root
+#    password: 123456
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/abc?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=CTT
-    username: root
-    password: 123456
-
+    dynamic:
+      primary: master #设置默认的数据源或者数据源组,默认值即为master
+      strict: false #设置严格模式,默认false不启动. 启动后在未匹配到指定数据源时候会抛出异常,不启动则使用默认数据源.
+      datasource:
+        master:
+          url: jdbc:mysql://23.19.75.213:7001/abc?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=CTT
+          username: router
+          password: O8ljzq7q
+          driver-class-name: com.mysql.jdbc.Driver # 3.2.0开始支持SPI可省略此配置
+        slave_1:
+          url: jdbc:mysql://23.19.75.213:7002/abc?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=CTT
+          username: router
+          password: O8ljzq7q
+          driver-class-name: com.mysql.jdbc.Driver
 #mybatis-plus\u914D\u7F6E
 mybatis-plus:
   # \u5982\u679C\u662F\u653E\u5728src/main/java\u76EE\u5F55\u4E0B classpath:/com/yourpackage/*/mapper/*Mapper.xml

@@ -1,0 +1,41 @@
+Manifest-Version: 1.0
+Class-Path: aspectjrt-1.9.1.jar commons-logging-1.1.1.jar mybatis-plus
+ -annotation-3.1.2.jar swagger-models-1.5.20.jar byte-buddy-1.10.18.ja
+ r tomcat-embed-core-9.0.39.jar jackson-datatype-jdk8-2.11.3.jar sprin
+ g-core-5.3.1.jar spring-plugin-metadata-1.2.0.RELEASE.jar mybatis-3.5
+ .2.jar jakarta.el-3.0.3.jar spring-jcl-5.3.1.jar jackson-core-2.11.3.
+ jar gson-2.8.0.jar mapstruct-1.2.0.Final.jar kotlin-stdlib-1.4.10.jar
+  xpp3-1.1.4c.jar spring-expression-5.3.1.jar swagger-annotations-1.5.
+ 20.jar spring-tx-5.3.1.jar spring-context-5.3.1.jar spring-web-5.3.1.
+ jar classmate-1.5.1.jar HikariCP-3.4.5.jar spring-plugin-core-1.2.0.R
+ ELEASE.jar spring-boot-starter-2.4.0.jar snakeyaml-1.27.jar httpclien
+ t-4.5.6.jar mybatis-plus-core-3.1.2.jar spring-boot-starter-logging-2
+ .4.0.jar dynamic-datasource-spring-boot-starter-3.2.0.jar spring-boot
+ -starter-json-2.4.0.jar lombok-1.18.16.jar jsr305-3.0.1.jar commons-p
+ ool2-2.9.0.jar log4j-api-2.13.3.jar springfox-spring-web-2.9.2.jar ja
+ karta.annotation-api-1.3.5.jar spring-boot-starter-tomcat-2.4.0.jar s
+ pringfox-swagger2-2.9.2.jar joda-time-2.7.jar mybatis-plus-boot-start
+ er-3.1.2.jar mybatis-spring-2.0.2.jar httpcore-4.4.13.jar commons-bea
+ nutils-1.7.0.jar jackson-module-parameter-names-2.11.3.jar jackson-da
+ tatype-jsr310-2.11.3.jar springfox-schema-2.9.2.jar mybatis-plus-exte
+ nsion-3.1.2.jar spring-boot-starter-jdbc-2.4.0.jar springfox-swagger-
+ ui-2.9.2.jar spring-aop-5.3.1.jar okhttp-4.0.0.jar mybatis-plus-3.1.2
+ .jar annotations-3.0.1.jar jackson-annotations-2.11.3.jar mybatis-spr
+ ing-boot-autoconfigure-2.1.0.jar spring-webmvc-5.3.1.jar spring-boot-
+ starter-web-2.4.0.jar log4j-to-slf4j-2.13.3.jar jcip-annotations-1.0.
+ jar jsqlparser-1.2.jar mybatis-spring-boot-starter-2.1.0.jar logback-
+ core-1.2.3.jar slf4j-api-1.7.20.jar mysql-connector-java-8.0.22.jar g
+ oogle-http-client-1.20.0.jar springfox-swagger-common-2.9.2.jar tomca
+ t-embed-websocket-9.0.39.jar commons-codec-1.15.jar spring-beans-5.3.
+ 1.jar commons-lang-2.4.jar guava-20.0.jar logback-classic-1.2.3.jar c
+ ommons-collections-3.2.jar okio-2.9.0.jar spring-boot-autoconfigure-2
+ .4.0.jar kotlin-stdlib-common-1.4.10.jar springfox-spi-2.9.2.jar spri
+ ng-jdbc-5.3.1.jar annotations-13.0.jar java-jwt-3.4.0.jar jedis-2.9.0
+ .jar jsoup-1.13.1.jar ezmorph-1.0.6.jar jul-to-slf4j-1.7.30.jar commo
+ ns-beanutils-1.7.0.jar commons-collections-3.1.jar commons-lang-2.5.j
+ ar commons-logging.jar ezmorph-1.0.3.jar json-lib-2.1-jdk15.jar sprin
+ gfox-core-2.9.2.jar google-http-client-xml-1.20.0.jar jackson-databin
+ d-2.11.3.jar minio-3.0.10.jar aspectjweaver-1.9.6.jar spring-boot-2.4
+ .0.jar
+Main-Class: com.fl.SilceManagerApplication
+

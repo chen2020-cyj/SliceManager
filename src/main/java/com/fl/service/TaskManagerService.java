@@ -221,12 +221,12 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
     /**
      * 根据filmId删除
      */
-    public TaskManager delTask(String filmId){
+    public void delTask(String filmId){
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
         wrapper.eq("film_id",filmId);
 
         taskManagerMapper.delete(wrapper);
-        return taskManagerMapper.selectOne(wrapper);
+//        return taskManagerMapper.selectOne(wrapper);
     }
     /**
      * 更新失败的url链接

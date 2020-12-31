@@ -79,4 +79,5 @@ public class FilmInfo {
      */
     private String whetherUpload;
 
+    private String updateTime;
 }

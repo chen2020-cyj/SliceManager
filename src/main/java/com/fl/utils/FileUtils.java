@@ -13,11 +13,12 @@ public class FileUtils {
      * @param fileName 保存的文件名
      * @return
      */
-    private static String path = "D:\\uploadImage";
+//    private static String path = "D:\\uploadImage";
+    private static String path = "/uploadImage";
     public static String upload(MultipartFile file) {
 
         //确定上传的文件名
-        String realPath = path + "\\" + getRandomString(10)+".jpg";
+        String realPath = path + "/" + getRandomString(10)+".jpg";
         System.out.println("上传文件：" + realPath);
 
         File dest = new File(realPath);
@@ -82,5 +83,10 @@ public class FileUtils {
         }
         return newFilePath;
     }
-
+    public static void delFile(String path){
+        File file = new File(path);
+        if (file.exists()){
+            file.delete();
+        }
+    }
 }

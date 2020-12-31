@@ -4,9 +4,10 @@ import lombok.Data;
 
 @Data
 public class ReqRevise {
-    private String token;
-
-    private Integer userId;
+//    private String token;
+//
+//    private Integer userId;
+    private String username;
 
     private String password;
 }

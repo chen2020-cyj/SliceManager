@@ -99,6 +99,14 @@ public class TaskController {
                     if (segmentState != null){
                         if (!segmentState.getSegmentFail().equals("")){
                             taskManagerList.add(managerList.get(i));
+//                            if (task.getDownloadState().equals("")){
+//
+//                            }else {
+//                                if (managerList.get(i).getDownloadState().equals(task.getDownloadState())){
+//                                    taskManagerList.add(managerList.get(i));
+//                                }
+//                            }
+
                         }
                     }
                 }
@@ -281,9 +289,8 @@ public class TaskController {
     @PostMapping(value = "/addFilmSource", produces = "application/json;charset=UTF-8")
     public String add(@RequestBody AddSegmentQueue queue) {
         TaskManager segment = new TaskManager();
-        segment.setDoubanId("");
-        List<MinioData> listMinio = new ArrayList<>();
-        List<DbData> listDbData = new ArrayList<>();
+        segment.setDoubanId(queue.getDoubanId());
+
 
         String filmId = getRandomString(10);
 
@@ -313,60 +320,68 @@ public class TaskController {
         }
 
         Integer id = 0;
-        Map<String, String> filmMap = new HashMap<>();
-        if (queue.getDoubanId().equals("")){
-            filmMap.clear();
-        }else {
-
-        }
-        filmMap.put("douban_id", queue.getDoubanId());
-        filmMap.put("language_id", String.valueOf(languageInfo1.getId()));
+//        Map<String, String> filmMap = new HashMap<>();
+//        if (queue.getDoubanId().equals("")){
+//            filmMap.clear();
+//        }else {
+//
+//        }
+//        filmMap.put("douban_id", queue.getDoubanId());
+//        filmMap.put("language_id", String.valueOf(languageInfo1.getId()));
 //        if (queue.getDoubanId()){
 //
 //        }
-        if (queue.getDoubanId().equals("")){
-            List<DouBanData> list = OkHttpUtils.douBanSearch(queue.getFilmName());
-            System.out.println("adajfkjf:"+list);
-            if (list.size() > 0){
-                System.out.println(list);
-                for (int i=0;i<list.size();i++){
-                    if (list.get(i).getTitle().contains(queue.getFilmName())){
-                        id = 1;
-                        segment.setDoubanId(String.valueOf(list.get(i).getDoubanId()));
-                        segment.setWhetherClimb(id);
-                        break;
-                    }
-                }
-                if (segment.getDoubanId().equals("") || segment.getDoubanId() == null ){
-                    id = 1;
-                    segment.setDoubanId(String.valueOf(list.get(0).getDoubanId()));
-                    segment.setWhetherClimb(id);
-                }
-                if (segment.equals("")){
-                    res.setCode(7);
-                    res.setMsg("豆瓣解析失败");
-                    res.setData("");
+//        if (queue.getDoubanId().equals("")){
+//            List<DouBanData> list = OkHttpUtils.douBanSearch(queue.getFilmName());
+//            System.out.println("adajfkjf:"+list);
+//            if (list.size() > 0){
+//                System.out.println(list);
+//                for (int i=0;i<list.size();i++){
+//                    if (list.get(i).getTitle().contains(queue.getFilmName())){
+//                        id = 1;
+//                        segment.setDoubanId(String.valueOf(list.get(i).getDoubanId()));
+//                        segment.setWhetherClimb(id);
+//                        break;
+//                    }
+//                }
+//                if (segment.getDoubanId().equals("") || segment.getDoubanId() == null ){
+//                    id = 1;
+//                    segment.setDoubanId(String.valueOf(list.get(0).getDoubanId()));
+//                    queue.setDoubanId(String.valueOf(list.get(0).getDoubanId()));
+//                    segment.setWhetherClimb(id);
+//                }
+//                if (segment.equals("")){
+//                    res.setCode(7);
+//                    res.setMsg("豆瓣解析失败");
+//                    res.setData("");
+//
+//                    return GsonUtils.toJson(res);
+//                }
+//            }else {
+////                res.setCode(7);
+////                res.setMsg("豆瓣解析失败");
+////                res.setData("");
+//            }
+//        }else {
 
-                    return GsonUtils.toJson(res);
-                }
-            }else {
-//                res.setCode(7);
-//                res.setMsg("豆瓣解析失败");
-//                res.setData("");
-            }
-        }
-        IPage<FilmInfo> infoIPage = filmInfoService.selectByDouBanId(queue.getDoubanId());
-        List<FilmInfo> filmInfos = infoIPage.getRecords();
 
-        if (filmInfos.size() > 0) {
-            segment.setDoubanId(String.valueOf(filmInfos.get(0).getDoubanId()));
-            segment.setWhetherClimb(id);
-        } else {
+//            IPage<FilmInfo> infoIPage = filmInfoService.selectByDouBanId(queue.getDoubanId());
+//            List<FilmInfo> filmInfos = infoIPage.getRecords();
+//
+//            if (filmInfos.size() > 0) {
+//                segment.setDoubanId(String.valueOf(filmInfos.get(0).getDoubanId()));
+//                segment.setWhetherClimb(id);
+//            } else {
+//
+//            }
+        segment.setWhetherClimb(0);
+//        }
+        System.out.println(queue.getResolvingPower());
 
-        }
-        List<TaskManager> taskManagerList = segmentService.selectSegmentList(queue.getResolvingPower(), String.valueOf(languageInfo1.getId()), queue.getFilmName());
+        List<TaskManager> taskManagerList = segmentService.selectSegmentList(queue.getResolvingPower(), String.valueOf(languageInfo1.getId()), queue.getDoubanId());
 
         if (taskManagerList.size() == 0) {
+
             ResData resData = addTask(queue, String.valueOf(languageInfo1.getId()), segment,filmId);
             return GsonUtils.toJson(resData);
         } else {
@@ -408,12 +423,12 @@ public class TaskController {
         if (!queue.getResolvingPower().contains(",")) {
             List<MinioInfo> minioInfos = minioInfoService.selectMoreMinio(resolvingPower);
             String minioId = "";
-            String notMinioId = "";
+
             for (int i = 0; i < minioInfos.size(); i++) {
                 totalSize = minioInfos.get(i).getTotalCapacity();
                 availableSize = minioInfos.get(i).getAvailableCapacity();
 
-                if (filmSize < availableSize) {
+                if (filmSize < availableSize && minioInfos.get(i).getUsageStatus().equals("0")) {
 //                    segment.setMinioId(String.valueOf(minioInfos.get(i).getId()));
                     minioId = String.valueOf(minioInfos.get(i).getId());
                     minioInfo.setResolvingPower(queue.getResolvingPower());
@@ -462,42 +477,46 @@ public class TaskController {
                 List<DbData> listDb = new ArrayList<>();
                 msg = GsonUtils.fromJson(String.valueOf(minio.get(0).getMsg()), Msg.class);
 
-                totalSize = minio.get(0).getTotalCapacity();
-                availableSize = minio.get(0).getAvailableCapacity();
+                for (int i1 = 0; i1 < minio.size(); i1++) {
+                    totalSize = minio.get(i1).getTotalCapacity();
+                    availableSize = minio.get(i1).getAvailableCapacity();
 
+                    if (filmSize < availableSize && minio.get(i1).getUsageStatus().equals("0")) {
+                        if (MinioId.equals("")) {
+                            MinioId = String.valueOf(minio.get(i1).getId());
+                        } else {
+                            MinioId = MinioId + "," + String.valueOf(minio.get(i1).getId());
+                        }
 
-                if (filmSize < availableSize) {
-                    if (MinioId.equals("")) {
-                        MinioId = String.valueOf(minio.get(0).getId());
+                        minioInfo.setResolvingPower(minio.get(i1).getResolvingPower());
+                        minioInfo.setArea(minio.get(i1).getArea());
+                        minioInfo.setTotalCapacity(totalSize);
+                        minioInfo.setAvailableCapacity(availableSize - filmSize);
+                        minioInfo.setMsg(minio.get(i1).getMsg());
+                        minioInfo.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
+                        minioList.add(minioInfo);
+
+                        minioInfoService.updateMinio(minioInfo,minioInfo.getId());
+
+                        break;
                     } else {
-                        MinioId = MinioId + "," + String.valueOf(minio.get(0).getId());
+                        if (notMinioId.equals("")) {
+                            notMinioId = split[i];
+                        } else {
+                            notMinioId = notMinioId + "," + split[i];
+                        }
+                        resAddSegment.setResolvingPower(notMinioId);
+                        resList.add(resAddSegment);
                     }
-
-                    minioInfo.setResolvingPower(minio.get(0).getResolvingPower());
-                    minioInfo.setArea(minio.get(0).getArea());
-                    minioInfo.setTotalCapacity(totalSize);
-                    minioInfo.setAvailableCapacity(availableSize - filmSize);
-                    minioInfo.setMsg(minio.get(0).getMsg());
-                    minioInfo.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
-                    minioList.add(minioInfo);
-
-                    minioInfoService.updateMinio(minioInfo,minioInfo.getId());
-
-                    continue;
-                } else {
-                    if (notMinioId.equals("")) {
-                        notMinioId = split[i];
-                    } else {
-                        notMinioId = notMinioId + "," + split[i];
-                    }
-                    resAddSegment.setResolvingPower(notMinioId);
-                    resList.add(resAddSegment);
                 }
             }
             TaskManager taskManager = resTaskManager(filmId,segment, MinioId, queue, filmSize, languageId);
             String str = "";
-//            if (resList.size() == 0) {
+            String[] split2 = MinioId.split(",");
 
+            if (split.length == split2.length){
+                resList.clear();
+            }
             if (resList.size() > 0){
                 List<String> task1 = new ArrayList<>();
                 List<String> task2 = new ArrayList<>();
@@ -509,7 +528,10 @@ public class TaskController {
                 for (int i=0;i<resList.size();i++){
                     task2.add(resList.get(i).getResolvingPower());
                 }
-                System.out.println("成功清晰度：：："+task1);
+//                if (){
+//
+//                }
+                System.out.println("传入清晰度：：："+task1);
                 System.out.println("失败清晰度：：："+task2);
                 task1.removeAll(task2);
 
@@ -520,20 +542,19 @@ public class TaskController {
                         str = str+","+task1.get(i);
                     }
                 }
-                System.out.println("清晰度"+str);
+                System.out.println("成功清晰度"+str);
                 taskManager.setResolvingPower(str);
                 segmentService.insertSegment(taskManager);
                 String currentTime = String.valueOf(System.currentTimeMillis()/1000);
-                VisitUrl visitUrl = createVisitUrl(filmId,currentTime, queue);
+                VisitUrl visitUrl = createVisitUrl(taskManager.getDoubanId(),currentTime, queue);
                 visitService.insertVisitUrl(visitUrl);
             }else {
                 System.out.println("数据" + taskManager);
                 String currentTime = String.valueOf(System.currentTimeMillis()/1000);
-                VisitUrl visitUrl = createVisitUrl(filmId,currentTime, queue);
+                VisitUrl visitUrl = createVisitUrl(taskManager.getDoubanId(),currentTime, queue);
                 visitService.insertVisitUrl(visitUrl);
                 segmentService.insertSegment(taskManager);
             }
-
 
             if (minioList.size() > 0) {
                 for (int i = 0; i < minioList.size(); i++) {
@@ -568,11 +589,11 @@ public class TaskController {
         }
 
     }
-    public VisitUrl createVisitUrl(String filmId,String createTime,AddSegmentQueue queue){
+    public VisitUrl createVisitUrl(String doubanId,String createTime,AddSegmentQueue queue){
         VisitUrl visitUrl = new VisitUrl();
         visitUrl.setMinioUrl("");
         visitUrl.setNginxUrl("");
-        visitUrl.setFilmId(filmId);
+        visitUrl.setDoubanId(doubanId);
         visitUrl.setCreateTime(createTime);
         visitUrl.setCdnUrl("");
         visitUrl.setUpdateTime("");
@@ -612,22 +633,21 @@ public class TaskController {
 //        long currentTime = System.currentTimeMillis()/1000;
 //        long tokenTime = Long.valueOf(user.getTokenTime());
 
-        TaskManager taskManager = segmentService.delTask(findOneSegment.getFilmId());
-        if (taskManager != null) {
+        TaskManager taskManager = segmentService.selectByFilmId(findOneSegment.getFilmId());
+        if (taskManager != null){
+            segmentService.delTask(findOneSegment.getFilmId());
             res.setCode(0);
             res.setMsg("success");
             res.setData("");
 
             return res;
-        } else {
-            res.setCode(1);
-            res.setMsg("没有这条数据");
-            res.setData("");
+        }else {
 
+            res.setCode(1);
+            res.setMsg("error");
+            res.setData("");
             return res;
         }
-
-
     }
 
     @ApiOperation("客户端更新失败的任务")
@@ -651,45 +671,6 @@ public class TaskController {
 
     }
 
-
-    /**
-     * 添加语言
-     *
-     * @param addLanguage
-     * @return
-     */
-    @ApiOperation("添加语言")
-    @PostMapping(value = "/addLanguage", produces = "application/json;charset=UTF-8")
-    public ResData addLanguage(@RequestBody AddLanguage addLanguage) {
-
-
-        LanguageInfo languageInfo = new LanguageInfo();
-        languageInfo.setCreateTime(String.valueOf(System.currentTimeMillis() / 1000));
-        languageInfo.setLanguage(addLanguage.getLanguage());
-        languageInfoService.insertLanguage(languageInfo);
-
-        res.setCode(0);
-        res.setMsg("success");
-        res.setData("");
-
-        return res;
-
-    }
-
-    @ApiOperation("查看所有语言")
-    @PostMapping(value = "/findAllLanguage", produces = "application/json;charset=UTF-8")
-    public ResFilmData addLanguage(@RequestBody FindAllLanguage findAllLanguage) {
-
-        List<LanguageInfo> languageInfos = languageInfoService.selectAllLanguage();
-        resTaskData.setCode(0);
-        resTaskData.setMsg("success");
-        resTaskData.setData(languageInfos);
-        resTaskData.setTotal(languageInfos.size());
-        System.out.println(resTaskData);
-
-        return resTaskData;
-
-    }
 
     public static String getRandomString(int length) {
         String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";

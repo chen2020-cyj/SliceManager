@@ -23,11 +23,11 @@ public class VisitService extends ServiceImpl<VisitUrlMapper, VisitUrl> {
     }
 
     /**
-     * 根据filmId查找数据
+     * 根据doubanId查找数据
      */
-    public VisitUrl selectByFilmId(String filmId){
+    public VisitUrl selectByDouBanId(String filmId){
         QueryWrapper<VisitUrl> wrapper = new QueryWrapper<>();
-        wrapper.eq("film_id",filmId);
+        wrapper.eq("douban_id",filmId);
 
         return visitUrlMapper.selectOne(wrapper);
     }
@@ -36,7 +36,7 @@ public class VisitService extends ServiceImpl<VisitUrlMapper, VisitUrl> {
      */
     public void updateFilmId(String filmId,VisitUrl visitUrl){
         QueryWrapper<VisitUrl> wrapper = new QueryWrapper<>();
-        wrapper.eq("film_id",filmId);
+        wrapper.eq("douban_id",filmId);
 
         visitUrlMapper.update(visitUrl,wrapper);
     }
