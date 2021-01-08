@@ -42,6 +42,10 @@ public class MinioInfo {
      */
     private String usageStatus;
     /**
+     * 昵称
+     */
+    private String nickName;
+    /**
      * 创建时间
      */
     private String createTime;

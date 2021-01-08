@@ -7,6 +7,5 @@
 
 
     <select id="selectPage" resultType="com.fl.entity.FilmSourceRecord">
-        select * from filmsource_manager limit #{offset},#{page};
-    </select>
+select smu.* from sys_role_ref_route srrm left join sys_menu smu on smu.id = srrm.menu_id where srrm.role_info_id =2;    </select>
 </mapper>

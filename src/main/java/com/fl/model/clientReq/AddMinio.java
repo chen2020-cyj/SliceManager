@@ -9,6 +9,7 @@ public class AddMinio {
 //    private String token;
 //
 //    private Integer userId;
+    private String nickName;
 
     private String resolvingPower;
 

@@ -4,6 +4,7 @@ package com.fl.utils;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.interfaces.Claim;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.sun.org.apache.xml.internal.security.algorithms.SignatureAlgorithm;
 
@@ -26,7 +27,7 @@ public class JwtUtils {
      * @param **password**
      * @return
      */
-    public static String sign(Integer userId) {
+    public static String sign(Object userId,Object permission,String name) {
         try {
             // 设置过期时间
             Date date = new Date(System.currentTimeMillis() + EXPIRE_TIME);
@@ -39,7 +40,9 @@ public class JwtUtils {
             // 返回token字符串
             return JWT.create()
                     .withHeader(header)
-                    .withClaim("userId", userId)
+                    .withClaim("userId", String.valueOf(userId))
+                    .withClaim("auth",String.valueOf(permission))
+                    .withClaim("name",name)
                     .withExpiresAt(date)
                     .sign(algorithm);
         } catch (Exception e) {
@@ -48,20 +51,39 @@ public class JwtUtils {
         }
     }
     /**
-     * 检验token是否正确
+     *
      * @param **token**
      * @return
      */
     public static Integer verify(String token){
         try {
             Algorithm algorithm = Algorithm.HMAC256(TOKEN_SECRET);
+            algorithm.getName();
             JWTVerifier verifier = JWT.require(algorithm).build();
+
             DecodedJWT jwt = verifier.verify(token);
             Integer userId = jwt.getClaim("userId").asInt();
+
             return userId;
         } catch (Exception e){
 //            e.printStackTrace();
             return 0;
         }
     }
+    /**
+     * 获取token里面的消息
+     */
+    public static String tokenInfo(String token,String str){
+        try {
+            Algorithm algorithm = Algorithm.HMAC256(TOKEN_SECRET);
+            JWTVerifier verifier = JWT.require(algorithm).build();
+            DecodedJWT jwt = verifier.verify(token);
+            return jwt.getClaim(str).asString();
+        }catch (Exception e){
+            return null;
+        }
+
+    }
+
+
 }

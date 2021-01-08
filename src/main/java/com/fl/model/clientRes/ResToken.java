@@ -9,4 +9,8 @@ public class ResToken {
     private String token;
 
     private String expiration;
+
+    private Object menu;
+
+//    private
 }

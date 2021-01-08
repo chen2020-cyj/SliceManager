@@ -76,6 +76,10 @@ public class TaskManager {
      */
     private String resolvingPower;
     /**
+     * 预删除
+     */
+    private String deleteFlag;
+    /**
      * 创建时间
      */
     private String createTime;

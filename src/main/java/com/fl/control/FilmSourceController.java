@@ -1,6 +1,7 @@
 package com.fl.control;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.fl.aop.annotation.Log;
 import com.fl.entity.*;
 import com.fl.model.UploadUrl;
 import com.fl.model.clientReq.*;
@@ -105,6 +106,7 @@ public class FilmSourceController {
 //            }
 //
 //    }
+    @Log("user:selectAllFilm")
     @ApiOperation("管理员查询所有片源")
     @PostMapping(value = "/selectAllFilm",produces = "application/json;charset=UTF-8")
     public ResFilmData selectAllFilm(@RequestBody FindAllFilmSource findAllFilmSource){

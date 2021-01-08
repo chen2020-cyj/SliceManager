@@ -22,6 +22,8 @@ public class User {
 
     private Integer groupId;
 
+    private Integer roleId;
+
     private String tokenTime;
 
     private String createTime;

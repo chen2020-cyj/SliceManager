@@ -45,6 +45,10 @@ public class FilmSourceRecord {
      */
     private String languageId;
     /**
+     * 预删除
+     */
+    private String deleteFlag;
+    /**
      * 创建时间
      */
     private String createTime;

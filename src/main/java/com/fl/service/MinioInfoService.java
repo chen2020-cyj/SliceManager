@@ -34,7 +34,7 @@ public class MinioInfoService extends ServiceImpl<MinioInfoMapper, MinioInfo> {
      * @param resolvingPower
      * @return
      */
-    public List<MinioInfo> findMinio(String resolvingPower){
+    public List<MinioInfo> findMinioByResolvingPower(String resolvingPower){
         QueryWrapper<MinioInfo> wrapper = new QueryWrapper<>();
 
         wrapper.eq("resolving_power",resolvingPower);
@@ -87,5 +87,10 @@ public class MinioInfoService extends ServiceImpl<MinioInfoMapper, MinioInfo> {
 
         return  minioInfoMapper.selectList(wrapper);
 
+    }
+    public List<MinioInfo> selectAllMinio(){
+        QueryWrapper<MinioInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("''","");
+        return  minioInfoMapper.selectList(wrapper);
     }
 }

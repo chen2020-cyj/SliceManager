@@ -40,18 +40,6 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
 
         return taskManagerMapper.selectPage(page1, wrapper);
     }
-    public Integer selectTaskCount(){
-        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("''","");
-
-
-        return taskManagerMapper.selectCount(wrapper);
-    }
-    public List<TaskManager> selectByFilmName(Map<String,String> map){
-        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.allEq(map);
-        return taskManagerMapper.selectList(wrapper);
-    }
     /**
      * 查询所有任务
      */
@@ -82,19 +70,6 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
         return taskManagerMapper.selectList(queryWrapper);
     }
 
-    public TaskManager selectTaskOne(String filmName,String languageId){
-        QueryWrapper<TaskManager> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like("film_name",filmName).and(Wrapper->Wrapper.eq("language_id",languageId));
-
-        return taskManagerMapper.selectOne(queryWrapper);
-    }
-    public TaskManager selectSegmentFilmOne(String filmId){
-
-        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("film_id",filmId);
-
-        return taskManagerMapper.selectOne(wrapper);
-    }
 
     /**
      *  根据state状态获取数据
@@ -188,26 +163,7 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
         taskManagerMapper.update(taskManager,wrapper);
     }
 
-    /**
-     * 查询download_state状态
-     */
-    public IPage<TaskManager> selectState(Integer offset,Integer page,String state){
-        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("download_state",state);
 
-        Page<TaskManager> page1 = new Page<>(offset,page);
-
-        return  taskManagerMapper.selectPage(page1,wrapper);
-    }
-    /**
-     * 根据download_state状态获取数量
-     */
-    public Integer selectStateCount(String state){
-        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("download_state",state);
-
-        return  taskManagerMapper.selectCount(wrapper);
-    }
     /**
      * 根据filmId查询
      */
@@ -264,19 +220,19 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
         switch (id){
             case 1:
                 //  downloadState不传 linkState不传 id = 1
-                queryWrapper.eq("''","");
+                queryWrapper.eq("''","").and(Wrapper->Wrapper.ne("delete_flag","1"));
                 break;
             case 2:
                 // downloadState不传 linkState传 id = 2
-                queryWrapper.eq("link_state",task.getLinkState());
+                queryWrapper.eq("link_state",task.getLinkState()).and(Wrapper->Wrapper.ne("delete_flag","1"));
                 break;
             case 3:
                 // downloadState传 linkState不传 id = 3
-                queryWrapper.eq("download_state",task.getDownloadState());
+                queryWrapper.eq("download_state",task.getDownloadState()).and(Wrapper->Wrapper.ne("delete_flag","1"));
                 break;
             case 4:
                 //downloadState传 linkState传 id = 4
-                queryWrapper.eq("download_state",task.getDownloadState()).and(Wrapper->Wrapper.eq("link_state",task.getLinkState()));
+                queryWrapper.eq("download_state",task.getDownloadState()).and(Wrapper->Wrapper.eq("link_state",task.getLinkState())).and(Wrapper->Wrapper.ne("delete_flag","1"));
                 break;
 
         }

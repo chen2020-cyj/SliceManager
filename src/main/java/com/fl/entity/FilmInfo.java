@@ -75,6 +75,10 @@ public class FilmInfo {
      */
     private String fullName;
     /**
+     * 预删除
+     */
+    private String deleteFlag;
+    /**
      * 电影是否上传
      */
     private String whetherUpload;

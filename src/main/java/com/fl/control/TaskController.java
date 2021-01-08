@@ -1,6 +1,7 @@
 package com.fl.control;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.fl.aop.annotation.Log;
 import com.fl.entity.*;
 import com.fl.model.*;
 import com.fl.model.clientReq.*;
@@ -15,11 +16,13 @@ import com.fl.utils.JwtUtils;
 import com.fl.utils.OkHttpUtils;
 import com.google.gson.Gson;
 
+import com.google.gson.reflect.TypeToken;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -50,7 +53,7 @@ public class TaskController {
 
     private ResFilmData resTaskData = new ResFilmData();
     private Msg msg = new Msg();
-
+    @Log("user:findMoreTask")
     @ApiOperation("客户端查看所有任务")
     @PostMapping(value = "/findMoreTask", produces = "application/json;charset=UTF-8")
     public String clientFindMoreTask(@RequestBody FindSegmentTask task) {
@@ -284,347 +287,288 @@ public class TaskController {
 //
 //
 //    }
-
+    @PreAuthorize("@zz.check('user:addTask')")
+    @Log("user:addFilmSource")
     @ApiOperation("客户端添加任务")
     @PostMapping(value = "/addFilmSource", produces = "application/json;charset=UTF-8")
-    public String add(@RequestBody AddSegmentQueue queue) {
-        TaskManager segment = new TaskManager();
-        segment.setDoubanId(queue.getDoubanId());
+    public ResData add(@RequestBody AddSegmentQueue queue) {
 
+        LanguageInfo languageInfo = languageInfoService.selectByLanguage(queue.getLanguage());
 
-        String filmId = getRandomString(10);
+        String resolvingPower = "";
+        String minioId = "";
+        double filmSize = 0.0;
+        Integer languagerId = languageInfo.getId();
+        if (queue.getFilmSize().contains("MB")) {
+            filmSize = Double.valueOf(queue.getFilmSize().replace("MB", "")) / 1024;
+        } else if (queue.getFilmSize().contains("GB")) {
+            filmSize = Double.valueOf(queue.getFilmSize().replace("GB", ""));
+        }
+        List<AddTaskMinio> list = new ArrayList<>();
+        if (queue.getMinioInfo().equals("")) {
 
-        Map<String, String> map = new HashMap<>();
-
-        LanguageInfo languageInfo1 = languageInfoService.selectByLanguage(queue.getLanguage());
-
-        List<Integer> arrList = new ArrayList<>();
-
-        if (!queue.getResolvingPower().contains(",")){
-
-        }else {
-            String[] split = queue.getResolvingPower().split(",");
-            for (int i = 0; i < split.length; i++) {
-                arrList.add(Integer.valueOf(split[i]));
-                Collections.sort(arrList);
+        } else {
+            list = gson.fromJson(queue.getMinioInfo(), new TypeToken<List<AddTaskMinio>>() {
+            }.getType());
+        }
+        if (!queue.getResolvingPower().equals("")) {
+            if (!queue.getResolvingPower().contains(",")) {
+                ResData oneMinio = findOneMinio(queue.getResolvingPower(), filmSize, queue, languagerId);
+                return oneMinio;
+            } else {
+                ResData moreMinio = findMoreMinio(queue.getResolvingPower(), queue, filmSize, languagerId);
+                return moreMinio;
             }
-            String newResolvingPower = "";
-            for (int i=0;i<arrList.size();i++){
-                if (newResolvingPower.equals("")){
-                    newResolvingPower = String.valueOf(arrList.get(i));
-                }else {
-                    newResolvingPower = newResolvingPower+","+String.valueOf(arrList.get(i));
+
+        } else {
+
+            for (int i = 0; i < list.size(); i++) {
+                if (resolvingPower.equals("")) {
+                    resolvingPower = list.get(i).getResolvingPower();
+                } else {
+                    resolvingPower = resolvingPower + "," + list.get(i).getResolvingPower();
+                }
+                if (minioId.equals("")) {
+                    minioId = String.valueOf(list.get(i).getId());
+                } else {
+                    minioId = minioId + "," + list.get(i).getId();
                 }
             }
-            queue.setResolvingPower(newResolvingPower);
+            List<TaskManager> taskManagerList = segmentService.selectSegmentList(resolvingPower, String.valueOf(languageInfo.getId()), queue.getDoubanId());
+
+            if (taskManagerList.size() == 0) {
+                ResData resData = new ResData();
+                if (queue.getResolvingPower().equals("")) {
+
+                } else {
+                    resData = addTaskResData(list, minioId, filmSize, queue);
+                }
+                return resData;
+            } else {
+                res.setCode(3);
+                res.setMsg("任务已存在");
+                res.setData("");
+                return res;
+            }
         }
+    }
+    /**
+     * 封装返回消息
+     */
+    public ResData addTaskResData(List<AddTaskMinio> list,String minioId,double filmSize,AddSegmentQueue queue){
+        if (list.size() == 1){
+            ResData resData = onlyMinio(Integer.valueOf(minioId), filmSize, queue);
 
-        Integer id = 0;
-//        Map<String, String> filmMap = new HashMap<>();
-//        if (queue.getDoubanId().equals("")){
-//            filmMap.clear();
-//        }else {
-//
-//        }
-//        filmMap.put("douban_id", queue.getDoubanId());
-//        filmMap.put("language_id", String.valueOf(languageInfo1.getId()));
-//        if (queue.getDoubanId()){
-//
-//        }
-//        if (queue.getDoubanId().equals("")){
-//            List<DouBanData> list = OkHttpUtils.douBanSearch(queue.getFilmName());
-//            System.out.println("adajfkjf:"+list);
-//            if (list.size() > 0){
-//                System.out.println(list);
-//                for (int i=0;i<list.size();i++){
-//                    if (list.get(i).getTitle().contains(queue.getFilmName())){
-//                        id = 1;
-//                        segment.setDoubanId(String.valueOf(list.get(i).getDoubanId()));
-//                        segment.setWhetherClimb(id);
-//                        break;
-//                    }
-//                }
-//                if (segment.getDoubanId().equals("") || segment.getDoubanId() == null ){
-//                    id = 1;
-//                    segment.setDoubanId(String.valueOf(list.get(0).getDoubanId()));
-//                    queue.setDoubanId(String.valueOf(list.get(0).getDoubanId()));
-//                    segment.setWhetherClimb(id);
-//                }
-//                if (segment.equals("")){
-//                    res.setCode(7);
-//                    res.setMsg("豆瓣解析失败");
-//                    res.setData("");
-//
-//                    return GsonUtils.toJson(res);
-//                }
-//            }else {
-////                res.setCode(7);
-////                res.setMsg("豆瓣解析失败");
-////                res.setData("");
-//            }
-//        }else {
+            return  resData;
+        }else {
+            ResData resData = moreMinio(minioId, filmSize, queue);
 
+            return  resData;
+        }
+    }
+    /**
+     * 如果只传入一个桶
+     */
+    public ResData onlyMinio(Integer minioId,double filmSize,AddSegmentQueue queue){
+        ResData resData = new ResData();
+        List<Integer> list = new ArrayList<>();
+        MinioInfo minio = minioInfoService.findMinio(minioId);
+        LanguageInfo languageInfo = languageInfoService.selectByLanguage(queue.getLanguage());
+        double availableCapacity = minio.getAvailableCapacity();
+        if (availableCapacity > filmSize){
+            minio.setAvailableCapacity(minio.getAvailableCapacity()-filmSize);
+            minio.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
 
-//            IPage<FilmInfo> infoIPage = filmInfoService.selectByDouBanId(queue.getDoubanId());
-//            List<FilmInfo> filmInfos = infoIPage.getRecords();
-//
-//            if (filmInfos.size() > 0) {
-//                segment.setDoubanId(String.valueOf(filmInfos.get(0).getDoubanId()));
-//                segment.setWhetherClimb(id);
-//            } else {
-//
-//            }
-        segment.setWhetherClimb(0);
-//        }
-        System.out.println(queue.getResolvingPower());
+            minioInfoService.updateMinio(minio,minio.getId());
 
-        List<TaskManager> taskManagerList = segmentService.selectSegmentList(queue.getResolvingPower(), String.valueOf(languageInfo1.getId()), queue.getDoubanId());
+            TaskManager taskManager = resTaskManger(String.valueOf(minio.getId()), minio.getResolvingPower(), queue, languageInfo.getId(), String.valueOf(filmSize));
 
-        if (taskManagerList.size() == 0) {
+            segmentService.insertSegment(taskManager);
 
-            ResData resData = addTask(queue, String.valueOf(languageInfo1.getId()), segment,filmId);
-            return GsonUtils.toJson(resData);
-        } else {
-            System.out.println("adadadad");
-
-            res.setCode(3);
-            res.setMsg("任务存在");
-            res.setData("");
-
-            return GsonUtils.toJson(res);
+            resData.setCode(0);
+            resData.setMsg("success");
+            resData.setData("");
+            return resData;
+        }else {
+            resData.setCode(6);
+            resData.setMsg("返回容量不够的存储桶Id,其他分辨率继续执行");
+            resData.setData(minio.getId());
+            return resData;
         }
 
     }
 
     /**
-     * 添加任务  没有任务添加
-     *
-     * @param
-     * @return
+     * 传入多个存储桶
      */
-    public ResData addTask(AddSegmentQueue queue, String languageId, TaskManager segment,String filmId) {
-        ResAddSegment resAddSegment = new ResAddSegment();
-        double filmSize = 0.0;
-        if (queue.getFilmSize().contains("MB")) {
-            String mb = queue.getFilmSize().replace("MB", "");
-            filmSize = Double.valueOf(mb) / 1024;
+    public ResData moreMinio(String minioId,double filmSize,AddSegmentQueue queue){
+        ResData resData = new ResData();
 
-        } else if (queue.getFilmSize().contains("GB")) {
-            String gb = queue.getFilmSize().replace("GB", "");
-            filmSize = Double.valueOf(gb);
-        }
-        List<ResAddSegment> resList = new ArrayList<>();
+        String[] split = minioId.split(",");
+        String newMinioId = "";
+        LanguageInfo languageInfo = languageInfoService.selectByLanguage(queue.getLanguage());
 
-        String resolvingPower = queue.getResolvingPower();
-        double totalSize = 0.0;
-        double availableSize = 0.0;
+        String successMinioId = "";
+        String successResolvingPower = "";
+        for (int i = 0; i < split.length; i++) {
+            MinioInfo minio = minioInfoService.findMinio(Integer.valueOf(split[i]));
+            double availableCapacity = minio.getAvailableCapacity();
+            if (availableCapacity > filmSize){
+                minio.setAvailableCapacity(minio.getAvailableCapacity()-filmSize);
+                minio.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
+                minioInfoService.updateMinio(minio,minio.getId());
 
-
-        if (!queue.getResolvingPower().contains(",")) {
-            List<MinioInfo> minioInfos = minioInfoService.selectMoreMinio(resolvingPower);
-            String minioId = "";
-
-            for (int i = 0; i < minioInfos.size(); i++) {
-                totalSize = minioInfos.get(i).getTotalCapacity();
-                availableSize = minioInfos.get(i).getAvailableCapacity();
-
-                if (filmSize < availableSize && minioInfos.get(i).getUsageStatus().equals("0")) {
-//                    segment.setMinioId(String.valueOf(minioInfos.get(i).getId()));
-                    minioId = String.valueOf(minioInfos.get(i).getId());
-                    minioInfo.setResolvingPower(queue.getResolvingPower());
-                    minioInfo.setArea(minioInfos.get(i).getArea());
-                    minioInfo.setTotalCapacity(totalSize);
-                    minioInfo.setAvailableCapacity(availableSize - filmSize);
-                    minioInfo.setMsg(minioInfos.get(i).getMsg());
-                    minioInfo.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
-                    minioInfoService.updateMinio(minioInfo,minioInfos.get(i).getId());
-                    break;
-                } else {
-
-                    System.out.println(resList);
-                    resAddSegment.setResolvingPower(queue.getResolvingPower());
-
+                if (successMinioId.equals("")){
+                    successMinioId = String.valueOf(minio.getId());
+                }else {
+                    successMinioId = successMinioId + "," + minio.getId();
                 }
-            }
-            resList.add(resAddSegment);
-            if (resAddSegment.getResolvingPower() == null) {
-                TaskManager taskManager = resTaskManager(filmId,segment, minioId, queue, filmSize, languageId);
-                minioInfoService.updateMinio(minioInfo, minioInfos.get(0).getId());
-
-                segmentService.insertSegment(taskManager);
-
-//                VisitUrl visitUrl = new VisitUrl();
-                String currentTime = String.valueOf(System.currentTimeMillis()/1000);
-                VisitUrl visitUrl = createVisitUrl(filmId,currentTime, queue);
-                visitService.insertVisitUrl(visitUrl);
-            }
-            res.setCode(6);
-            res.setMsg("分辨率已经存满的存储桶");
-            res.setData(resList);
-
-            return res;
-        } else {
-
-            String[] split = queue.getResolvingPower().split(",");
-
-            String MinioId = "";
-            String notMinioId = "";
-            String resolving = "";
-            List<MinioInfo> minioList = new ArrayList<>();
-
-            for (int i = 0; i < split.length; i++) {
-                List<MinioInfo> minio = minioInfoService.findMinio(split[i]);
-                List<DbData> listDb = new ArrayList<>();
-                msg = GsonUtils.fromJson(String.valueOf(minio.get(0).getMsg()), Msg.class);
-
-                for (int i1 = 0; i1 < minio.size(); i1++) {
-                    totalSize = minio.get(i1).getTotalCapacity();
-                    availableSize = minio.get(i1).getAvailableCapacity();
-
-                    if (filmSize < availableSize && minio.get(i1).getUsageStatus().equals("0")) {
-                        if (MinioId.equals("")) {
-                            MinioId = String.valueOf(minio.get(i1).getId());
-                        } else {
-                            MinioId = MinioId + "," + String.valueOf(minio.get(i1).getId());
-                        }
-
-                        minioInfo.setResolvingPower(minio.get(i1).getResolvingPower());
-                        minioInfo.setArea(minio.get(i1).getArea());
-                        minioInfo.setTotalCapacity(totalSize);
-                        minioInfo.setAvailableCapacity(availableSize - filmSize);
-                        minioInfo.setMsg(minio.get(i1).getMsg());
-                        minioInfo.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
-                        minioList.add(minioInfo);
-
-                        minioInfoService.updateMinio(minioInfo,minioInfo.getId());
-
-                        break;
-                    } else {
-                        if (notMinioId.equals("")) {
-                            notMinioId = split[i];
-                        } else {
-                            notMinioId = notMinioId + "," + split[i];
-                        }
-                        resAddSegment.setResolvingPower(notMinioId);
-                        resList.add(resAddSegment);
-                    }
+                if (successResolvingPower.equals("")){
+                    successResolvingPower = String.valueOf(minio.getResolvingPower());
+                }else {
+                    successResolvingPower = successResolvingPower + "," + minio.getResolvingPower();
                 }
-            }
-            TaskManager taskManager = resTaskManager(filmId,segment, MinioId, queue, filmSize, languageId);
-            String str = "";
-            String[] split2 = MinioId.split(",");
 
-            if (split.length == split2.length){
-                resList.clear();
-            }
-            if (resList.size() > 0){
-                List<String> task1 = new ArrayList<>();
-                List<String> task2 = new ArrayList<>();
-                String[] split1 = queue.getResolvingPower().split(",");
-
-                for (int i=0;i<split1.length;i++){
-                    task1.add(split1[i]);
-                }
-                for (int i=0;i<resList.size();i++){
-                    task2.add(resList.get(i).getResolvingPower());
-                }
-//                if (){
-//
-//                }
-                System.out.println("传入清晰度：：："+task1);
-                System.out.println("失败清晰度：：："+task2);
-                task1.removeAll(task2);
-
-                for (int i=0;i<task1.size();i++){
-                    if (str.equals("")){
-                        str = task1.get(i);
-                    }else{
-                        str = str+","+task1.get(i);
-                    }
-                }
-                System.out.println("成功清晰度"+str);
-                taskManager.setResolvingPower(str);
-                segmentService.insertSegment(taskManager);
-                String currentTime = String.valueOf(System.currentTimeMillis()/1000);
-                VisitUrl visitUrl = createVisitUrl(taskManager.getDoubanId(),currentTime, queue);
-                visitService.insertVisitUrl(visitUrl);
             }else {
-                System.out.println("数据" + taskManager);
-                String currentTime = String.valueOf(System.currentTimeMillis()/1000);
-                VisitUrl visitUrl = createVisitUrl(taskManager.getDoubanId(),currentTime, queue);
-                visitService.insertVisitUrl(visitUrl);
-                segmentService.insertSegment(taskManager);
-            }
-
-            if (minioList.size() > 0) {
-                for (int i = 0; i < minioList.size(); i++) {
-
-                    minioInfoService.updateMinio(minioList.get(i), minioList.get(i).getId());
+                if (newMinioId.equals("")){
+                    newMinioId = String.valueOf(minio.getId());
+                }else {
+                    newMinioId = newMinioId + "," + minio.getResolvingPower();
                 }
-                res.setCode(0);
-                res.setMsg("返回分辨率，如有有数据那么就表示该分辨率存储桶已满,其他任务自动分配");
-                res.setData(resList);
-                return res;
-            } else {
-                String resolvingFail = "";
-                String[] split1 = queue.getResolvingPower().split(",");
-                for (int i = 0; i < split1.length; i++) {
+            }
+        }
 
-                    if (resolvingFail.equals("")) {
-                        resolvingFail = split1[i];
-                    } else {
-                        resolvingFail = resolvingFail + "," + split1[i];
+        TaskManager taskManager = resTaskManger(successMinioId, successResolvingPower, queue, languageInfo.getId(), String.valueOf(filmSize));
+
+        segmentService.insertSegment(taskManager);
+
+        resData.setCode(6);
+        resData.setMsg("返回容量不够的存储桶Id,其他分辨率继续执行");
+        resData.setData(newMinioId);
+        return resData;
+    }
+    /**
+     * 返回一个TaskManager类
+     */
+    public TaskManager resTaskManger(String minioId,String resolvingPower,AddSegmentQueue queue,Integer languageId,String filmSize){
+        TaskManager taskManager = new TaskManager();
+        taskManager.setMinioId(minioId);
+        taskManager.setFilmId(getRandomString(10));
+        taskManager.setDownloadState("0");
+        taskManager.setUploadState("");
+        taskManager.setSegmentState("");
+        taskManager.setLinkState("");
+        taskManager.setResolvingPower(resolvingPower);
+        taskManager.setDoubanId(queue.getDoubanId());
+        taskManager.setWhetherClimb(0);
+        taskManager.setFilmName(queue.getFilmName());
+        taskManager.setLanguageId(String.valueOf(languageId));
+        taskManager.setBtUrl(queue.getBtUrl());
+        taskManager.setSubtitleSuffix(queue.getSubtitleSuffix());
+        taskManager.setSubtitleUrl(queue.getSubtitleUrl());
+        taskManager.setFilmSize(filmSize);
+        taskManager.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
+        return taskManager;
+    }
+
+    /**
+     * 只传入一个清晰度
+     */
+    private ResData findOneMinio(String resolving,double filmSize,AddSegmentQueue queue,Integer languageId) {
+        List<MinioInfo> minioInfoList = minioInfoService.selectMoreMinio(resolving);
+        ResData resData = new ResData();
+        double availableCapacity = 0.0;
+        String minioId = "";
+        String definition = "";
+        for (int i = 0; i < minioInfoList.size(); i++) {
+            availableCapacity = minioInfoList.get(i).getAvailableCapacity();
+            if (availableCapacity > filmSize) {
+                minioId = String.valueOf(minioInfoList.get(i).getId());
+
+                minioInfoList.get(i).setAvailableCapacity(minioInfoList.get(i).getAvailableCapacity()-filmSize);
+                minioInfoList.get(i).setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
+
+                break;
+            } else {
+
+            }
+        }
+        TaskManager taskManager = resTaskManger(minioId, queue.getResolvingPower(), queue, languageId, String.valueOf(filmSize));
+
+        if (minioId.equals("")) {
+            resData.setCode(6);
+            resData.setMsg("该清晰度没有对应的存储桶可以进行存储");
+            resData.setData(resolving);
+        } else {
+            segmentService.insertSegment(taskManager);
+            resData.setCode(0);
+            resData.setMsg("success");
+            resData.setData("");
+        }
+        return resData;
+
+    }
+    private ResData findMoreMinio(String resolving,AddSegmentQueue queue,double filmSize,Integer languageId) {
+        ResData resData = new ResData();
+        String[] split = resolving.split(",");
+
+        double availableCapacity = 0.0;
+        String minioId = "";
+        String successResolving = "";
+        String failResolving = "";
+        for (int i = 0; i < split.length; i++) {
+            List<MinioInfo> minioByResolvingPower = minioInfoService.findMinioByResolvingPower(split[i]);
+
+            for (int j = 0; j < minioByResolvingPower.size(); j++) {
+                availableCapacity = minioByResolvingPower.get(j).getAvailableCapacity();
+                if (availableCapacity > filmSize){
+                    minioByResolvingPower.get(j).setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
+                    minioByResolvingPower.get(j).setAvailableCapacity(minioByResolvingPower.get(j).getAvailableCapacity()-filmSize);
+                    if (minioId.equals("")){
+                        minioId = String.valueOf(minioByResolvingPower.get(j).getId());
+                    }else {
+                        minioId = minioId + ","+String.valueOf(minioByResolvingPower.get(j).getId());
+                    }
+                    if (successResolving.equals("")){
+                        successResolving = split[i];
+                    }else {
+                        successResolving = successResolving + "," + split[i];
+                    }
+
+                    break;
+                }else {
+                    if (failResolving.equals("")){
+                        failResolving = split[i];
+                    }else {
+                        if (failResolving.contains(split[i])){
+
+                        }else {
+                            failResolving = failResolving + "," + split[i];
+                        }
                     }
                 }
-                resAddSegment.setResolvingPower(resolvingFail);
-                resList.add(resAddSegment);
-//                taskManager.setResolvingPower(str);
-//                segmentService.insertSegment(taskManager);
-                res.setCode(6);
-                res.setMsg("返回分辨率，如有有数据那么就表示该分辨率存储桶已满,其他任务自动分配");
-                res.setData(resList);
-                return res;
             }
 
         }
-
-    }
-    public VisitUrl createVisitUrl(String doubanId,String createTime,AddSegmentQueue queue){
-        VisitUrl visitUrl = new VisitUrl();
-        visitUrl.setMinioUrl("");
-        visitUrl.setNginxUrl("");
-        visitUrl.setDoubanId(doubanId);
-        visitUrl.setCreateTime(createTime);
-        visitUrl.setCdnUrl("");
-        visitUrl.setUpdateTime("");
-        return visitUrl;
-    }
-
-    public TaskManager resTaskManager(String filmId,TaskManager segment, String MinioId, AddSegmentQueue queue, double filmSize, String languageId) {
-
-        segment.setMinioId(MinioId);
-        segment.setFilmId(filmId);
-        segment.setFilmName(queue.getFilmName());
-        segment.setDownloadState("0");
-        segment.setResolvingPower(queue.getResolvingPower());
-        segment.setBtUrl(queue.getBtUrl());
-        segment.setSubtitleUrl(queue.getSubtitleUrl());
-        segment.setCreateTime(String.valueOf(System.currentTimeMillis() / 1000));
-        segment.setUploadState("");
-        segment.setLinkState("");
-        segment.setUploadState("");
-        segment.setSegmentState("");
-        segment.setFilmSize(String.valueOf(filmSize));
-        segment.setSubtitleSuffix(queue.getSubtitleSuffix());
-        segment.setLanguageId(languageId);
+        if (minioId.equals("")){
+            resData.setCode(1);
+            resData.setMsg("没有一个存储桶可以进行添加");
+            resData.setData("");
+        }else {
+            TaskManager taskManager = resTaskManger(minioId, queue.getResolvingPower(), queue, languageId, String.valueOf(filmSize));
+            segmentService.insertSegment(taskManager);
+            resData.setCode(6);
+            resData.setMsg("返回失败的清晰度，其他任务继续执行");
+            resData.setData(failResolving);
+        }
+//        if (){
 //
-//        segment.setMinioUrl("");
-//        segment.setDoubanId("");
-        return segment;
+//        }
+        TaskManager taskManager = resTaskManger(minioId, queue.getResolvingPower(), queue, languageId, String.valueOf(filmSize));
+        return resData;
     }
 
-
-
+    @Log("user:delTask")
     @ApiOperation("客户端删除任务")
     @PostMapping(value = "/delTask", produces = "application/json;charset=UTF-8")
     public ResData delTask(@RequestBody FindOneSegment findOneSegment) {
@@ -634,22 +578,16 @@ public class TaskController {
 //        long tokenTime = Long.valueOf(user.getTokenTime());
 
         TaskManager taskManager = segmentService.selectByFilmId(findOneSegment.getFilmId());
-        if (taskManager != null){
-            segmentService.delTask(findOneSegment.getFilmId());
-            res.setCode(0);
-            res.setMsg("success");
-            res.setData("");
+        taskManager.setDeleteFlag("1");
+        segmentService.updateUploadState(taskManager.getFilmId(), taskManager);
 
-            return res;
-        }else {
+        res.setCode(0);
+        res.setMsg("success");
+        res.setData("");
 
-            res.setCode(1);
-            res.setMsg("error");
-            res.setData("");
-            return res;
-        }
+        return res;
     }
-
+    @Log("user:updateTask")
     @ApiOperation("客户端更新失败的任务")
     @PostMapping(value = "/updateTask", produces = "application/json;charset=UTF-8")
     public ResData updateTask(@RequestBody UpdateTask updateTask) {

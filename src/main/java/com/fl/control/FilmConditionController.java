@@ -1,5 +1,6 @@
 package com.fl.control;
 
+import com.fl.aop.annotation.Log;
 import com.fl.entity.Search;
 import com.fl.model.clientRes.ResCondition;
 import com.fl.model.clientRes.ResFilmData;
@@ -23,7 +24,7 @@ public class FilmConditionController {
 
 
     private ResFilmData resFilmData = new ResFilmData();
-
+    @Log("user:selectAllFilmCondition")
     @ApiOperation("查询所有电影的各种条件")
     @PostMapping("/selectAllFilmCondition")
     public ResFilmData selectAllFilmCondition() {

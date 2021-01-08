@@ -502,13 +502,11 @@ public class SliceController {
         TaskManager taskManager = taskManagerService.selectByFilmId(reqSliceServer.getFilmId());
         String uploadState = String.valueOf(taskManager.getUploadState());
         String code = String.valueOf(reqSliceServer.getCode());
+        //切片未完成
         if (reqSliceServer.getData().equals("")){
 //            System.out.println("上传状态");
             if (!uploadState.equals("")){
                 SegmentUploadState segmentUploadState = GsonUtils.fromJson(uploadState, SegmentUploadState.class);
-//                segmentUploadState.setSegmentUploadComplete("");
-//                segmentUploadState.setSegmentUploadFail("");
-//                segmentUploadState.setSegmentUploadComplete("");
 
                 switch (code){
                     case "6003":
@@ -540,6 +538,7 @@ public class SliceController {
                 SegmentUploadState segmentUploadState = new SegmentUploadState();
                 segmentUploadState.setSegmentUploadComplete("");
                 segmentUploadState.setSegmentUploadFail("");
+                segmentUploadState.setSegmentUpload(code);
                 switch (code){
                     case "6003":
 //                        segmentUploadState.setSegmentUpload(code);
@@ -552,7 +551,7 @@ public class SliceController {
 //                                segmentUploadState.setSegmentUpload(segmentUploadState.getSegmentUpload()+","+code);
 //                            }
 //                        }
-                        segmentUploadState.setSegmentUpload(code);
+
                         break;
                     case "6004":
                         segmentUploadState.setSegmentUpload(code);
@@ -583,6 +582,7 @@ public class SliceController {
                 taskManagerService.updateUploadState(reqSliceServer.getFilmId(),taskManager);
             }
         }else {
+            //切片完成
             SegmentUploadState segmentUploadState;
             if (uploadState.equals("")){
                 segmentUploadState = new SegmentUploadState();
@@ -606,16 +606,16 @@ public class SliceController {
         }
     }
     private void uploadDecide(SegmentUploadState segmentUploadState,String code,TaskManager taskManager,MinioBackMessage minioBackMessage,ReqSliceServer reqSliceServer) {
-        System.out.println("案发发个广告"+minioBackMessage);
+//        System.out.println("案发发个广告"+minioBackMessage);
 //        MinioBackMessage minioBackMessage1 = GsonUtils.fromJson(GsonUtils.toJson(reqSliceServer.getData()), MinioBackMessage.class);
 //        System.out.println(minioBackMessage1);
         String newCode = "";
-        if (code.equals("6013")) {
-            newCode = "6003";
-        } else if (code.equals("6014")) {
-            newCode = "6004";
-        } else if (code.equals("6015")) {
-            newCode = "6005";
+        if (code.equals("6003")) {
+            newCode = "6013";
+        } else if (code.equals("6004")) {
+            newCode = "6014";
+        } else if (code.equals("6005")) {
+            newCode = "6015";
         }
 
         if (segmentUploadState.getSegmentUploadComplete().equals("")){
@@ -716,7 +716,7 @@ public class SliceController {
                 newMinioId = minioInfo.getId();
             }
         }
-        System.out.println("解析出来的消息"+minioBackMessage);
+//        System.out.println("解析出来的消息"+minioBackMessage);
         //原本的filmSize
         double filmSize = Double.valueOf(minioBackMessage.getOriginalSize());
 
@@ -766,9 +766,9 @@ public class SliceController {
             List<UploadUrl> uploadUrlList = gson.fromJson(visitUrl1.getMinioUrl(), new TypeToken<List<UploadUrl>>() {
             }.getType());
 
-
-            List<NginxUrlInfo> nginxUrlInfoList = gson.fromJson(visitUrl1.getNginxUrl(), new TypeToken<List<NginxUrlInfo>>() {
-            }.getType());
+//
+//            List<NginxUrlInfo> nginxUrlInfoList = gson.fromJson(visitUrl1.getNginxUrl(), new TypeToken<List<NginxUrlInfo>>() {
+//            }.getType());
 
 //            for (int i = 0;i<nginxUrlInfoList.size();i++){
 //                if (nginxUrlInfoList.get(i).getResolving().equals(resolvingPower)){
@@ -791,7 +791,7 @@ public class SliceController {
             }
 //            nginxUrlInfoList.add(nginxUrlInfo);
             uploadUrlList.add(uploadUrl);
-            visitUrl.setNginxUrl(GsonUtils.toJson(nginxUrlInfoList));
+//            visitUrl.setNginxUrl(GsonUtils.toJson(nginxUrlInfoList));
             visitUrl.setMinioUrl(GsonUtils.toJson(uploadUrlList));
             visitService.updateFilmId(taskManager.getFilmId(), visitUrl);
         }

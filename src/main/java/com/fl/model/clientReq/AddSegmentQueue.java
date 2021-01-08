@@ -1,5 +1,6 @@
 package com.fl.model.clientReq;
 
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 @Data
@@ -16,6 +17,8 @@ public class AddSegmentQueue {
     private String resolvingPower;
 
     private String subtitleSuffix;
+
+    private String minioInfo;
 
     private String language;
 

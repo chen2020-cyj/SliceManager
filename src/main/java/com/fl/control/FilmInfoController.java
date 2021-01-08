@@ -2,7 +2,9 @@ package com.fl.control;
 
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.fl.aop.annotation.Log;
 import com.fl.entity.*;
+import com.fl.model.FilmInfoData;
 import com.fl.model.ResFilmInfoMapper;
 import com.fl.model.UploadUrl;
 import com.fl.model.clientReq.*;
@@ -15,6 +17,7 @@ import com.google.gson.reflect.TypeToken;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,22 +44,26 @@ public class FilmInfoController {
     private VisitService visitService;
     @Autowired
     private SearchService searchService;
-
+    @Autowired
+    private MinioInfoService minioInfoService;
 
     private ResFilmData resFilmData = new ResFilmData();
     private ResData res = new ResData();
     private Gson gson = new Gson();
 
-
+    @PreAuthorize("@zz.check('menu:filmInfo')")
+    @Log("user:selectFilm")
     @ApiOperation("查询所有影片信息")
     @PostMapping(value = "/selectFilm", produces = "application/json;charset=UTF-8")
     public ResFilmData selectFilm(@RequestBody FindAllFilmInfo findAllFilmInfo) {
 
-//        ResFilmInfoSource
 
+        FilmInfoData filmInfoData = new FilmInfoData();
+//        ResFilmInfoSource
+        ResFilmData resFilmData = new ResFilmData();
         System.out.println(findAllFilmInfo);
         List<ResFilmInfoSource> list = new ArrayList<>();
-
+        List<MinioInfo> minioInfoList = minioInfoService.selectAllMinio();
         if (findAllFilmInfo.getCategoryId().equals("1")) {
             if (!findAllFilmInfo.getFilmId().equals("")){
                 ResFilmInfoSource resFilmInfoSource = new ResFilmInfoSource();
@@ -105,13 +112,16 @@ public class FilmInfoController {
                     resFilmInfoSource.setResFilmSource(resFilmSourceList);
                     list.add(resFilmInfoSource);
                 }else {
+
                     resFilmInfoSource.setFilmInfo(filmInfo);
                     resFilmInfoSource.setResFilmSource(null);
                     list.add(resFilmInfoSource);
                 }
+                filmInfoData.setList(list);
+                filmInfoData.setMinioInfoList(minioInfoList);
                 resFilmData.setCode(0);
                 resFilmData.setMsg("success");
-                resFilmData.setData(list);
+                resFilmData.setData(filmInfoData);
                 resFilmData.setTotal(1);
 
                 return resFilmData;
@@ -138,110 +148,58 @@ public class FilmInfoController {
                     listFilmInfo =resFilmInfoMapper.getFilmInfoIPage().getRecords();
                 }
 
-                if (findAllFilmInfo.getWhetherUpload().equals("0")){
-                    for (int i = 0; i < listFilmInfo.size(); i++) {
-                        ResFilmInfoSource resFilmInfoSource = new ResFilmInfoSource();
+                for (int i = 0; i < listFilmInfo.size(); i++) {
+                    ResFilmInfoSource resFilmInfoSource = new ResFilmInfoSource();
 
-                        List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectByFilmInfoId(listFilmInfo.get(i).getId());
-                        if (filmSourceRecords.size() > 0) {
-                            LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(filmSourceRecords.get(0).getLanguageId()));
+                    List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectByFilmInfoId(listFilmInfo.get(i).getId());
+                    if (filmSourceRecords.size() > 0) {
+                        LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(filmSourceRecords.get(0).getLanguageId()));
 
-                            List<ResFilmSource> resFilmSourceList = new ArrayList<>();
-                            ResFilmSource resFilmSource = new ResFilmSource();
-                            for (int j = 0; j < filmSourceRecords.size(); j++) {
-                                resFilmSource = resSource(filmSourceRecords.get(j), languageInfo.getLanguage());
+                        List<ResFilmSource> resFilmSourceList = new ArrayList<>();
+                        ResFilmSource resFilmSource = new ResFilmSource();
+                        for (int j = 0; j < filmSourceRecords.size(); j++) {
+                            resFilmSource = resSource(filmSourceRecords.get(j), languageInfo.getLanguage());
 
-                                VisitUrl visitUrl = visitService.selectById(Integer.valueOf(filmSourceRecords.get(0).getVisitUrlId()));
-                                List<UploadUrl> uploadUrlList = new ArrayList<>();
+                            VisitUrl visitUrl = visitService.selectById(Integer.valueOf(filmSourceRecords.get(0).getVisitUrlId()));
+                            List<UploadUrl> uploadUrlList = new ArrayList<>();
 
-                                if (visitUrl != null){
-                                    uploadUrlList = gson.fromJson(visitUrl.getMinioUrl(), new TypeToken<List<UploadUrl>>() {
-                                    }.getType());
-                                }
-                                if (uploadUrlList.size() == 0){
-                                    resFilmSource.setMinioUrl("");
-                                }else {
-                                    Map<String,String> map1 = new HashMap<>();
-                                    for (int k = 0; k < uploadUrlList.size(); k++) {
-
-                                        map1.put(uploadUrlList.get(k).getResolving(),uploadUrlList.get(k).getUrl());
-                                    }
-                                    resFilmSource.setMinioUrl(map1);
-                                }
-                                resFilmSourceList.add(resFilmSource);
+                            if (visitUrl != null){
+                                uploadUrlList = gson.fromJson(visitUrl.getMinioUrl(), new TypeToken<List<UploadUrl>>() {
+                                }.getType());
                             }
+                            if (uploadUrlList.size() == 0){
+                                resFilmSource.setMinioUrl("");
+                            }else {
+                                Map<String,String> map1 = new HashMap<>();
+                                for (int k = 0; k < uploadUrlList.size(); k++) {
 
-                            resFilmInfoSource.setFilmInfo(listFilmInfo.get(i));
-                            resFilmInfoSource.setResFilmSource(resFilmSourceList);
-                            list.add(resFilmInfoSource);
-                        } else {
-                            resFilmInfoSource.setFilmInfo(listFilmInfo.get(i));
-                            resFilmInfoSource.setResFilmSource(null);
-                            list.add(resFilmInfoSource);
+                                    map1.put(uploadUrlList.get(k).getResolving(),uploadUrlList.get(k).getUrl());
+                                }
+                                resFilmSource.setMinioUrl(map1);
+                            }
+                            resFilmSourceList.add(resFilmSource);
                         }
+
+                        resFilmInfoSource.setFilmInfo(listFilmInfo.get(i));
+                        resFilmInfoSource.setResFilmSource(resFilmSourceList);
+                        list.add(resFilmInfoSource);
+                    } else {
+
+                        resFilmInfoSource.setFilmInfo(listFilmInfo.get(i));
+                        resFilmInfoSource.setResFilmSource(null);
+                        list.add(resFilmInfoSource);
                     }
 
-                    resFilmData.setCode(0);
-                    resFilmData.setMsg("success");
-                    resFilmData.setData(list);
-                    resFilmData.setTotal(resFilmInfoMapper.getCount());
-
-                    return resFilmData;
-                }else {
-                    for (int i = 0; i < listFilmInfo.size(); i++) {
-                        ResFilmInfoSource resFilmInfoSource = new ResFilmInfoSource();
-
-                        List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectByFilmInfoId(listFilmInfo.get(i).getId());
-                        if (filmSourceRecords.size() >0) {
-                            LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(filmSourceRecords.get(0).getLanguageId()));
-
-                            List<ResFilmSource> resFilmSourceList = new ArrayList<>();
-                            ResFilmSource resFilmSource = new ResFilmSource();
-                            for (int j = 0; j < filmSourceRecords.size(); j++) {
-                                resFilmSource = resSource(filmSourceRecords.get(j), languageInfo.getLanguage());
-
-                                VisitUrl visitUrl = visitService.selectById(Integer.valueOf(filmSourceRecords.get(0).getVisitUrlId()));
-                                List<UploadUrl> uploadUrlList = new ArrayList<>();
-
-                                if (visitUrl != null){
-                                    uploadUrlList = gson.fromJson(visitUrl.getMinioUrl(), new TypeToken<List<UploadUrl>>() {
-                                    }.getType());
-                                }
-                                if (uploadUrlList.size() == 0){
-                                    resFilmSource.setMinioUrl("");
-                                }else {
-                                    Map<String,String> map1 = new HashMap<>();
-                                    for (int k = 0; k < uploadUrlList.size(); k++) {
-
-                                        map1.put(uploadUrlList.get(k).getResolving(),uploadUrlList.get(k).getUrl());
-                                    }
-                                    resFilmSource.setMinioUrl(map);
-                                }
-                                resFilmSourceList.add(resFilmSource);
-                            }
-
-                            resFilmInfoSource.setFilmInfo(listFilmInfo.get(i));
-                            resFilmInfoSource.setResFilmSource(resFilmSourceList);
-                            list.add(resFilmInfoSource);
-
-                        } else {
-                            resFilmInfoSource.setFilmInfo(listFilmInfo.get(i));
-                            resFilmInfoSource.setResFilmSource(null);
-
-                            list.add(resFilmInfoSource);
-
-                        }
-                    }
-                    Integer indexPage = (findAllFilmInfo.getPage()-1)*findAllFilmInfo.getOffset();
-                    Integer offset = findAllFilmInfo.getOffset()*findAllFilmInfo.getPage();
-
-                    resFilmData.setCode(0);
-                    resFilmData.setMsg("success");
-                    resFilmData.setData(list);
-                    resFilmData.setTotal(resFilmInfoMapper.getCount());
-
-                    return resFilmData;
                 }
+                filmInfoData.setList(list);
+                filmInfoData.setMinioInfoList(minioInfoList);
+                resFilmData.setCode(0);
+                resFilmData.setMsg("success");
+                resFilmData.setData(filmInfoData);
+                resFilmData.setTotal(resFilmInfoMapper.getCount());
+
+                return resFilmData;
+
 
             }
         } else{
@@ -350,7 +308,7 @@ public class FilmInfoController {
 //        return resFilmData;
 //
 //    }
-
+    @Log("user:updateFilmInfo")
     @ApiOperation("修改电影信息")
     @PostMapping(value = "/updateFilmInfo", produces = "application/json;charset=UTF-8")
     public ResFilmData updateFilmInfo(@RequestBody UpdateInfo updateInfo) {

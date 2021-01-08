@@ -1,6 +1,7 @@
 package com.fl.control;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.fl.aop.annotation.Log;
 import com.fl.entity.MinioInfo;
 import com.fl.entity.NginxManager;
 import com.fl.entity.TaskManager;
@@ -28,6 +29,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -70,6 +72,9 @@ public class MinioController {
     private ResMinio resMinio = new ResMinio();
     private ResFilmData resMinioData = new ResFilmData();
     private Msg msg = new Msg();
+
+    @PreAuthorize("@zz.check('user:addMinio')")
+    @Log("user:addMinio")
     @ApiOperation("添加一个存储桶")
     @PostMapping(value = "/addMinio",produces = "application/json;charset=UTF-8")
     public String addMinio(@RequestBody AddMinio addMinio) {
@@ -77,6 +82,7 @@ public class MinioController {
 
         msg.setMsg(addMinio.getData());
 
+        minioInfo.setNickName(addMinio.getNickName());
         minioInfo.setCreateTime(String.valueOf(System.currentTimeMillis() / 1000));
         minioInfo.setResolvingPower(addMinio.getResolvingPower());
         minioInfo.setMsg(GsonUtils.toJson(msg));
@@ -97,51 +103,117 @@ public class MinioController {
         return GsonUtils.toJson(resMinioData);
 
     }
-
+    @PreAuthorize("@zz.check('menu:minioInfo')")
+    @Log("user:selectAllMinio")
     @ApiOperation("查询多个存储桶")
     @PostMapping(value = "/selectAllMinio",produces = "application/json;charset=UTF-8")
     public String selectAllMinio(@RequestBody FindAllMinio findAllMinio){
 
-
-//        Integer page = (findAllMinio.getPage()-1)*findAllMinio.getOffset();
         Integer offset = findAllMinio.getOffset();
-//        User user = userService.selectUserInfo(findAllMinio.getUserId());
 
         List<MinioInfo> listMinioInfo = new ArrayList<>();
 
-
-
                 IPage<MinioInfo> minioInfoIPage = minioInfoService.selectAllMinio(findAllMinio.getResolvingPower(), findAllMinio.getPage(), offset);
                 listMinioInfo = minioInfoIPage.getRecords();
-
+//                List<MinioInfo> list = new ArrayList<>();
                 for (int i=0;i<listMinioInfo.size();i++) {
+                    if (listMinioInfo.get(i).getUsageStatus().equals("0")){
+                        System.out.println(listMinioInfo.get(i).getMsg());
+                        Msg da = gson.fromJson(String.valueOf(listMinioInfo.get(i).getMsg()), Msg.class);
 
-                    System.out.println(listMinioInfo.get(i).getMsg());
-                    Msg da = gson.fromJson(String.valueOf(listMinioInfo.get(i).getMsg()), Msg.class);
+                        List<MinioData> minioDataList = gson.fromJson(String.valueOf(da.getMsg()), new TypeToken<List<MinioData>>() {
+                        }.getType());
 
-                    List<MinioData> list = gson.fromJson(String.valueOf(da.getMsg()), new TypeToken<List<MinioData>>() {
-                    }.getType());
-
-
-                    listMinioInfo.get(i).setMsg(list);
-
+                        listMinioInfo.get(i).setMsg(minioDataList);
+                    }
                 }
+
 
                 resMinio.setList(listMinioInfo);
                 resMinio.setTotal(minioInfoService.selectCount(findAllMinio.getResolvingPower()));
-
 
                 resMinioData.setCode(0);
                 resMinioData.setMsg("success");
                 resMinioData.setData(listMinioInfo);
                 resMinioData.setTotal(resMinio.getTotal());
 
-
-
                 return GsonUtils.toJson(resMinioData);
 
     }
+    @Log("user:readyMinio")
+    @ApiOperation("存储桶预警")
+    @PostMapping(value = "/readyMinio",produces = "application/json;charset=UTF-8")
+    public ResData readyMinio(){
+        ResData resData = new ResData();
+        List<MinioInfo> minioInfoList = minioInfoService.selectAllMinio();
+        List<MinioInfo> list = new ArrayList<>();
 
+        //剩余容量
+        double availableCapacity = 0.0;
+        String definition = "";
+        for (int i = 0; i < minioInfoList.size(); i++) {
+            if ( minioInfoList.get(i).getAvailableCapacity() > 10) {
+                if (definition.equals("")){
+                    definition = minioInfoList.get(i).getResolvingPower();
+                }else {
+                    definition = definition + "," + minioInfoList.get(i).getResolvingPower();
+                }
+
+            }else {
+                list.add(minioInfoList.get(i));
+            }
+        }
+
+        String resolvingPower = "";
+        for (int i = 0; i < list.size(); i++) {
+            if (resolvingPower.equals("")){
+
+                if (definition.contains(list.get(i).getResolvingPower())){
+
+                }else {
+                    resolvingPower = list.get(i).getResolvingPower();
+                }
+            }else {
+                if (resolvingPower.contains(list.get(i).getResolvingPower())){
+
+                }else {
+                    if (definition.contains(list.get(i).getResolvingPower())){
+
+                    }else {
+                        resolvingPower = resolvingPower + ","+list.get(i).getResolvingPower();
+                    }
+
+                }
+            }
+        }
+        if (!resolvingPower.equals("")){
+            resData.setCode(1);
+            resData.setMsg("容量不足的存储桶");
+            resData.setData(resolvingPower);
+        }else {
+            resData.setCode(0);
+            resData.setMsg("success");
+            resData.setData("");
+        }
+
+        return resData;
+//        return GsonUtils.toJson(resMinioData);
+
+    }
+
+    @ApiOperation("查询有哪些分辨率")
+    @PostMapping(value = "/selectResolvingPower",produces = "application/json;charset=UTF-8")
+    public ResData selectResolvingPower(){
+        ResData resData = new ResData();
+        List<MinioInfo> minioInfoList = minioInfoService.selectAllMinio();
+        List<MinioInfo> list = new ArrayList<>();
+
+
+        return resData;
+//        return GsonUtils.toJson(resMinioData);
+
+    }
+    @Log("user:updateMinio")
         @ApiOperation("无法运行的存储桶")
         @PostMapping(value = "/updateMinio",produces = "application/json;charset=UTF-8")
         public ResData updateMinio(@RequestBody ReqChangeMinio reqChangeMinio) {
@@ -154,7 +226,7 @@ public class MinioController {
             double usedCapacity = minio.getTotalCapacity() - minio.getAvailableCapacity();
             //查找该清晰度的存储桶分配一个出去
             MinioInfo info = new MinioInfo();
-            List<MinioInfo> minioInfoList = minioInfoService.findMinio(minio.getResolvingPower());
+            List<MinioInfo> minioInfoList = minioInfoService.findMinioByResolvingPower(minio.getResolvingPower());
             for (int i =0;i<minioInfoList.size();i++){
 //                double capacity = minioInfoList.get(i).getTotalCapacity()-minioInfoList.get(i).getAvailableCapacity();
                 if (minioInfoList.get(i).getAvailableCapacity() >usedCapacity){

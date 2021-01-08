@@ -1,5 +1,6 @@
 package com.fl.control;
 
+import com.fl.aop.annotation.Log;
 import com.fl.entity.LanguageInfo;
 import com.fl.model.clientReq.ReqAddLanguage;
 import com.fl.model.clientRes.ResData;
@@ -23,7 +24,7 @@ public class LanguageController {
     private LanguageInfoService languageInfoService;
 
     private ResData res = new ResData();
-
+    @Log("user:selectAllLanguage")
     @ApiOperation("查询所有语言")
     @PostMapping("/selectAllLanguage")
     public ResData selectAllLanguage(){
@@ -35,7 +36,7 @@ public class LanguageController {
         res.setData(languageInfos);
         return res;
     }
-
+    @Log("user:addNewLanguage")
     @ApiOperation("添加新的语言")
     @PostMapping("/addNewLanguage")
     public ResData addNewLanguage(@RequestBody ReqAddLanguage reqAddLanguage){

@@ -1,5 +1,6 @@
 package com.fl.service;
 
+
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fl.entity.VisitUrl;
@@ -15,6 +16,7 @@ public class VisitService extends ServiceImpl<VisitUrlMapper, VisitUrl> {
     /**
      * 根据 id查找数据
      */
+//    @DS()
     public VisitUrl selectById(Integer id){
         QueryWrapper<VisitUrl> wrapper = new QueryWrapper<>();
         wrapper.eq("id",id);
