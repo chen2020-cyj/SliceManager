@@ -8,6 +8,7 @@ import com.fl.service.SystemManagerService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,6 +39,8 @@ public class SystemManagerController {
         resData.setData("");
         return resData;
     }
+
+    @PreAuthorize("@zz.check('user:system')")
     @ApiOperation("查询系统数据")
     @PostMapping("/selectSystem")
     public ResData selectSystem(){
@@ -46,7 +49,7 @@ public class SystemManagerController {
         SystemManager systemManager = systemManagerService.selectByOne(1);
         resData.setCode(0);
         resData.setMsg("success");
-        resData.setData("");
+        resData.setData(systemManager);
 
         return resData;
     }

@@ -30,10 +30,12 @@ import io.swagger.annotations.ApiOperation;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -118,7 +120,7 @@ public class MinioController {
 //                List<MinioInfo> list = new ArrayList<>();
                 for (int i=0;i<listMinioInfo.size();i++) {
                     if (listMinioInfo.get(i).getUsageStatus().equals("0")){
-                        System.out.println(listMinioInfo.get(i).getMsg());
+//                        System.out.println(listMinioInfo.get(i).getMsg());
                         Msg da = gson.fromJson(String.valueOf(listMinioInfo.get(i).getMsg()), Msg.class);
 
                         List<MinioData> minioDataList = gson.fromJson(String.valueOf(da.getMsg()), new TypeToken<List<MinioData>>() {
@@ -182,7 +184,6 @@ public class MinioController {
                     }else {
                         resolvingPower = resolvingPower + ","+list.get(i).getResolvingPower();
                     }
-
                 }
             }
         }
@@ -208,6 +209,20 @@ public class MinioController {
         List<MinioInfo> minioInfoList = minioInfoService.selectAllMinio();
         List<MinioInfo> list = new ArrayList<>();
 
+        String str = "";
+
+        for (int i = 0; i < minioInfoList.size(); i++) {
+
+            if (str.equals("")){
+                str = minioInfoList.get(i).getResolvingPower();
+            }
+            if (!str.contains(minioInfoList.get(i).getResolvingPower())){
+                str = str + "," + minioInfoList.get(i).getResolvingPower();
+            }
+        }
+        resData.setCode(0);
+        resData.setMsg("success");
+        resData.setData(str);
 
         return resData;
 //        return GsonUtils.toJson(resMinioData);

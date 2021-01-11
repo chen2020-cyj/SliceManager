@@ -19,11 +19,13 @@ public class OperationLogController {
     private OperationLogService operationLogService;
 
 
-//    @PreAuthorize("@zz.check('menu:minioInfo')")
-//    @Log("user:selectAllMinio")
-//    @ApiOperation("查询操作日志")
-//    @PostMapping(value = "/selectOperationLog",produces = "application/json;charset=UTF-8")
-//    public ResData selectOperationLog(){
-//
-//    }
+    @PreAuthorize("@zz.check('user:log')")
+    @Log("user:selectLog")
+    @ApiOperation("查询操作日志")
+    @PostMapping(value = "/selectLog",produces = "application/json;charset=UTF-8")
+    public ResData selectLog(){
+        ResData resData = new ResData();
+
+        return resData;
+    }
 }

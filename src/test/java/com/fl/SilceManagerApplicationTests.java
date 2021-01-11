@@ -28,7 +28,7 @@ public class SilceManagerApplicationTests {
     private TaskManagerService taskManagerService;
     @Test
     public void test() {
-        System.out.println(passwordEncoder.encode("123456"));
+        System.out.println(passwordEncoder.encode("888888"));
 
     }
 

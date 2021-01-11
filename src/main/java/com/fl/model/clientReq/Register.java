@@ -12,6 +12,7 @@ public class Register {
 
     private Integer groupId;
 
+    
 //    private String token;
 //
 //    private Integer userId;

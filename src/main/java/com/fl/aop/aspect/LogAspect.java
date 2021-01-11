@@ -40,6 +40,11 @@ public class LogAspect {
         return result;
     }
 
+    /**
+     * 处理切面
+     * @param point
+     * @throws Throwable
+     */
     public void handle(ProceedingJoinPoint point) throws Throwable {
         MethodSignature signature = (MethodSignature) point.getSignature();
         Method method = signature.getMethod();
@@ -48,13 +53,11 @@ public class LogAspect {
         if (log != null) {
             //注解上的描述
             value = log.value();
-//            System.out.println();
         }
         // 请求的方法名
         String className = point.getTarget().getClass().getName();
         String methodName = signature.getName();
-//        System.out.println(className + "." + methodName + "()");
-//        sysLog.setMethod(className + "." + methodName + "()");
+
         // 请求的方法参数值
         Object[] args = point.getArgs();
         // 请求的方法参数名称
@@ -67,21 +70,18 @@ public class LogAspect {
                 params += "  " + paramNames[i] + ": " + args[i];
             }
 //            System.out.println("方法参数"+params);
-
         }
 
         String[] split = value.split(":");
 
         HttpServletRequest request = HttpContextUtils.getHttpServletRequest();
         String token = request.getHeader("token");
-//        Integer verify = JwtUtils.verify(token);
-//        if (!String.valueOf(verify).equals("0")){
-//            updateLogInfo(split[1],verify,params);
-//        }
-//        System.out.println("拿取的token:" + token);
+        String userId = JwtUtils.tokenInfo(token, "userId");
+
+        updateLogInfo(split[1],Integer.valueOf(userId),params);
     }
     /**
-     * 更新日志信息
+     * 更新操作日志信息
      */
     public void updateLogInfo(String logInfo,Integer userId,String param){
 

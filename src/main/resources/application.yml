@@ -42,7 +42,7 @@ mybatis-plus:
     logic-not-delete-value: 0
 
   configuration:
-    #log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
     #    #\u914D\u7F6E\u8FD4\u56DE\u6570\u636E\u5E93(column\u4E0B\u5212\u7EBF\u547D\u540D&&\u8FD4\u56DEjava\u5B9E\u4F53\u662F\u9A7C\u5CF0\u547D\u540D)\uFF0C\u81EA\u52A8\u5339\u914D\u65E0\u9700as\uFF08\u6CA1\u5F00\u542F\u8FD9\u4E2A\uFF0CSQL\u9700\u8981\u5199as\uFF1A select user_id as userId\uFF09
     #    map-underscore-to-camel-case: true
     cache-enabled: true

@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.fl.exception;
+package com.fl.exception.handler;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -21,31 +21,31 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 /**
- * @author Zheng Jie
+ * @author 陈友江
  * @date 2018-11-23
  */
 @Data
 class ApiError {
 
-    private Integer status = 400;
+    private Integer code = 400;
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private LocalDateTime timestamp;
-    private String message;
+    private LocalDateTime msg;
+    private String data;
 
     private ApiError() {
-        timestamp = LocalDateTime.now();
+        msg = LocalDateTime.now();
     }
 
     public static ApiError error(String message){
         ApiError apiError = new ApiError();
-        apiError.setMessage(message);
+        apiError.setData(message);
         return apiError;
     }
 
     public static ApiError error(Integer status, String message){
        ApiError apiError = new ApiError();
-        apiError.setStatus(status);
-        apiError.setMessage(message);
+        apiError.setCode(status);
+        apiError.setData(message);
         return apiError;
     }
 }

@@ -18,7 +18,7 @@ public class AddSegmentQueue {
 
     private String subtitleSuffix;
 
-    private String minioInfo;
+    private Object minioInfo;
 
     private String language;
 

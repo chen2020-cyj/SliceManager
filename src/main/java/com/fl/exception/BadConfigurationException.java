@@ -18,7 +18,7 @@ package com.fl.exception;
 /**
  * 统一关于错误配置信息 异常
  *
- * @author: liaojinlong
+ * @author: 陈友江
  * @date: 2020/6/10 18:06
  */
 public class BadConfigurationException extends RuntimeException {
@@ -95,4 +95,6 @@ public class BadConfigurationException extends RuntimeException {
     protected BadConfigurationException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
+
+
 }

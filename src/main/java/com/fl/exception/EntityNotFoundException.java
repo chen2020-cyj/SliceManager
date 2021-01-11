@@ -3,7 +3,7 @@ package com.fl.exception;
 import org.springframework.util.StringUtils;
 
 /**
- * @Author : 傅化韩
+ * @Author : 陈友江
  * @create 2020/10/30 14:59
  */
 public class EntityNotFoundException extends RuntimeException {

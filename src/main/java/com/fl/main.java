@@ -13,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.JwtParser;
+import lombok.Data;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -54,5 +55,26 @@ public class main {
                 .collect(Collectors.toList()):Collections.emptyList();
 
         System.out.println(authorities);
+
+        MinioMsg msg = new MinioMsg();
+        MinioMsg msg2 = new MinioMsg();
+        List<MinioMsg> list = new ArrayList<>();
+
+        msg.setId(1);
+        msg.setResolvingPower("720");
+        msg2.setId(2);
+        msg2.setResolvingPower("480");
+        list.add(msg);
+        list.add(msg2);
+
+        System.out.println(GsonUtils.toJson(list));
+        String ffdd = "[{\"id\":1,\"resolvingPower\":\"720\"},{\"id\":2,\"resolvingPower\":\"480\"},{\"id\":3,\"resolvingPower\":\"320\"}]";
     }
+
+}
+@Data
+class MinioMsg{
+    private Integer id;
+
+    private String resolvingPower;
 }
