@@ -14,7 +14,10 @@ public class ResSegmentManager {
      * 电影id
      */
     private String filmId;
-
+    /**
+     * 对应电影信息表随机生成的id
+     */
+    private String filmRandom;
     /**
      * 种子链接
      */

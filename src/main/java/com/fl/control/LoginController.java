@@ -2,24 +2,18 @@ package com.fl.control;
 
 import com.fl.aop.annotation.Log;
 import com.fl.config.bean.JwtUserDto;
-import com.fl.entity.Menu;
-import com.fl.entity.Rule;
+import com.fl.entity.*;
 import com.fl.model.Authority;
 import com.fl.model.clientReq.*;
 import com.fl.model.clientRes.ResData;
 import com.fl.model.clientRes.ResToken;
-import com.fl.entity.User;
-import com.fl.service.MenuService;
-import com.fl.service.RuleUserInfoService;
-import com.fl.service.UserService;
-import com.fl.utils.GsonUtils;
-import com.fl.utils.JwtUtils;
-import com.fl.utils.RedisHelper;
-import com.fl.utils.TokenUtils;
+import com.fl.service.*;
+import com.fl.utils.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -53,17 +47,21 @@ public class LoginController {
 
     @Autowired
     private UserService userService;
-    @Autowired
-    private RuleUserInfoService ruleUserInfoService;
+//    @Autowired
+//    private RuleUserInfoService ruleUserInfoService;
     @Autowired
     private MenuService menuService;
     @Resource
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private SysRoleRefRouteService sysRoleRefRouteService;
+    @Autowired
+    private RoleInfoService roleInfoService;
 
 
     @ApiOperation("登陆接口")
     @PostMapping(value = "/login", produces = "application/json;charset=UTF-8")
-    public String login(@RequestBody LoginUser user) {
+    public synchronized String login(@RequestBody LoginUser user) {
         try {
 
             UsernamePasswordAuthenticationToken authenticationToken =
@@ -78,13 +76,15 @@ public class LoginController {
             map.put("password", jwtUserDto.getPassword());
 
             User login = userService.login(map);
-            String token = JwtUtils.sign(login.getId(), GsonUtils.toJson(authentication), login.getUsername());
+            String token = JwtUtils.sign(login.getId());
 
+            String power = JwtUtils.power(GsonUtils.toJson(authentication), login.getUsername());
+            PowerUtils.savePower(power,login.getUsername());
+
+            //返回给前端的token信息
             resToken.setUserId(login.getId());
             resToken.setToken(token);
             resToken.setExpiration(String.valueOf((System.currentTimeMillis() + JwtUtils.EXPIRE_TIME) / 1000));
-
-//            TokenUtils.setToken(login,token);
 
             User userMsg = TokenUtils.getToken(String.valueOf(login.getId()));
 
@@ -93,40 +93,11 @@ public class LoginController {
                 RedisHelper.del("token-" + userMsg.getId());
                 TokenUtils.setToken(login, token);
             } else {
-
                 TokenUtils.setToken(login, token);
             }
-            List<Authority> authorities = new ArrayList<>();
 
-            List<Menu> list = menuService.selectByRoleId(login);
 //            System.out.println(list);
-
-            for (int i = 0; i < list.size(); i++) {
-                Authority authority = new Authority();
-                if (list.get(i).getWhetherMenu() == 1) {
-                    authority.setId(list.get(i).getId());
-                    authority.setIcon(list.get(i).getIcon());
-                    authority.setMainMenu(list.get(i).getTitle());
-                    authority.setMainMenuUrl(list.get(i).getPath());
-                    authorities.add(authority);
-                }
-            }
-
-            for (int i = 0; i < authorities.size(); i++) {
-                List<String> subMain = new ArrayList<>();
-                for (int j = 0; j < list.size(); j++) {
-                    if (list.get(j).getPid() == authorities.get(i).getId()) {
-                        subMain.add(list.get(j).getPath());
-                    }
-                }
-                if (subMain.size() == 0) {
-                    authorities.get(i).setList("");
-                } else {
-                    authorities.get(i).setList(subMain);
-                }
-
-            }
-            resToken.setMenu(authorities);
+//            resToken.setMenu(authorities);
 
             res.setCode(0);
             res.setMsg("success");
@@ -134,41 +105,42 @@ public class LoginController {
 
             return gson.toJson(res);
         } catch (Exception e) {
-//            e.printStackTrace();
+            e.printStackTrace();
             res.setCode(1);
             res.setMsg("用户名或账号错误");
             res.setData("");
 
             return gson.toJson(res);
         }
-//        User user = gson.fromJson(str, User.class);
-
-
     }
-
-    @Log("user:register")
+    @PreAuthorize("@zz.check('admin:addAdmin')")
+    @Log("admin:addAdmin")
     @ApiOperation("注册接口")
-    @PostMapping("/register")
+    @PostMapping(value = "/register",produces = "application/json;charset=UTF-8")
     public ResData register(@RequestBody Register user) {
 
-
         User login = userService.selectByUser(user.getUsername());
-
+//        List<User> list = new ArrayList<>();
+////        userService.saveBatch(list);
         if (login == null) {
             String encode = passwordEncoder.encode(user.getPassword());
+            User register = new User();
+
+            register.setRoleId(user.getRoleId());
+            register.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
+            register.setUsername(user.getUsername());
+            register.setName(user.getName());
+            register.setGroupId(1);
+            register.setTokenTime("");
+            register.setToken("");
+            register.setPassword(encode);
+
+            userService.save(register);
 
             res.setCode(0);
             res.setMsg("success");
             res.setData("");
 
-            Rule rule = ruleUserInfoService.selectUser(user.getGroupId());
-            userInfo.setPassword(encode);
-            userInfo.setUsername(user.getUsername());
-            userInfo.setName(user.getName());
-            userInfo.setGroupId(rule.getId());
-//            userInfo.set
-            System.out.println(userInfo);
-            userService.register(userInfo);
             return res;
 
         } else {
@@ -188,14 +160,18 @@ public class LoginController {
         ResData resData = new ResData();
 
         User login = userService.selectUserInfo(user.getUserId());
-        User cacheUser = TokenUtils.getToken(String.valueOf(user.getUserId()));
 
-        String auth = JwtUtils.tokenInfo(cacheUser.getToken(), "auth");
+//        String power = PowerUtils.getPower(login.getUsername());
+
+//        User cacheUser = TokenUtils.getToken(String.valueOf(user.getUserId()));
+
+//        String auth = JwtUtils.tokenInfo(cacheUser.getToken(), "auth");
         List<String> list = new ArrayList<>();
-        RedisHelper.del("token-" + user.getUserId());
+//        RedisHelper.del("token-" + user.getUserId());
         if (login != null) {
-            System.out.println(auth);
-            String token = JwtUtils.sign(login.getId(), auth, login.getUsername());
+//            System.out.println(auth);
+            RedisHelper.del("token-"+login.getId());
+            String token = JwtUtils.sign(login.getId());
 
             long currentTime = System.currentTimeMillis();
             login.setToken(token);
@@ -208,7 +184,6 @@ public class LoginController {
             resToken.setUserId(login.getId());
             resToken.setToken(token);
             resToken.setExpiration(String.valueOf((currentTime + JwtUtils.EXPIRE_TIME) / 1000));
-            resToken.setMenu("");
 
             resData.setCode(0);
             resData.setMsg("success");
@@ -225,18 +200,35 @@ public class LoginController {
 
     }
 
-    @Log("user:register")
+    @Log("user:revise")
     @ApiOperation("修改密码")
     @PostMapping(value = "/revise", produces = "application/json;charset=UTF-8")
     public ResData revise(@RequestBody ReqRevise reqRevise) {
 
-        User user = userService.selectByUser(reqRevise.getUsername());
+
+        System.out.println(reqRevise);
+        User user = userService.selectByUserId(reqRevise.getId());
         String encode = passwordEncoder.encode(reqRevise.getPassword());
         user.setPassword(encode);
 
+        RedisHelper.del("token-"+user.getId());
+
         userService.updateToken(user);
+        res.setCode(0);
+        res.setMsg("success");
+        res.setData("");
         return res;
     }
+
+//    @ApiOperation("修改用户权限")
+//    @PostMapping(value = "/select", produces = "application/json;charset=UTF-8")
+//    public ResData updateUserGroup(@RequestBody ReqUpdateGroup reqUpdateGroup) {
+//
+//
+//
+//        return res;
+//    }
+
 
     //    @ApiOperation("查询所有权限组")
 //    @PostMapping(value = "/findAllRoles",produces = "application/json;charset=UTF-8")
@@ -263,6 +255,7 @@ public class LoginController {
         User user = userService.selectUserInfo(signOut.getId());
 
         RedisHelper.del("token-" + user.getId());
+        RedisHelper.del("power-"+user.getUsername());
         System.out.println(user);
         user.setTokenTime("");
         user.setToken("");
@@ -281,6 +274,16 @@ public class LoginController {
 
         res.setCode(400);
         res.setMsg("该账号已被登录");
+        res.setData("");
+
+        return res;
+    }
+    @ApiOperation("token过期")
+    @PostMapping(value = "/tokenOverTime", produces = "application/json;charset=UTF-8")
+    public ResData tokenOverTime(HttpServletRequest request) {
+
+        res.setCode(400);
+        res.setMsg("token过期");
         res.setData("");
 
         return res;

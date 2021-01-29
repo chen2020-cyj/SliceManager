@@ -13,8 +13,10 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.LocalVariableTableParameterNameDiscoverer;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 
@@ -24,6 +26,8 @@ public class LogAspect {
 
     @Autowired
     private OperationLogService operationLogService;
+    @Resource
+    private PasswordEncoder passwordEncoder;
 
     @Pointcut("@annotation(com.fl.aop.annotation.Log)")
     public void pointcut() {
@@ -87,29 +91,66 @@ public class LogAspect {
 
         switch (logInfo){
             case "updateFilmInfo":
-                insert(userId,"修改了电影信息"+ GsonUtils.toJson(param));
+                insert(userId,"修改了电影信息"+ param);
                 break;
             case "addNewLanguage":
-                insert(userId,"添加了新的语言"+ GsonUtils.toJson(param));
+                insert(userId,"添加了新语言"+ param);
                 break;
-            case "register":
-                insert(userId,"注册了一个账号"+ GsonUtils.toJson(param));
+            case "addAdmin":
+                String password = param.substring(param.indexOf("password") + 9, param.indexOf("roleId") - 2);
+                String encodePassword = "";
+                if (password.equals("")){
+
+                }else {
+                    encodePassword = passwordEncoder.encode(password);
+                }
+                param.replace("password=","password="+encodePassword);
+                insert(userId,"注册了一个账号"+ param);
                 break;
             case "updateMinio":
-                insert(userId,"切换了一个新的桶"+ GsonUtils.toJson(param));
+                insert(userId,"切换了一个新的桶"+ param);
                 break;
             case "addFilmSource":
-                insert(userId,"添加一个任务"+ GsonUtils.toJson(param));
+                insert(userId,"添加一个任务"+ param);
                 break;
             case "delTask":
-                insert(userId,"删除一个任务"+ GsonUtils.toJson(param));
+                insert(userId,"删除一个任务"+ param);
                 break;
             case "updateTask":
-
-                insert(userId,"更新一个任务"+ GsonUtils.toJson(param));
+                insert(userId,"更新一个任务"+ param);
                 break;
             case "updateSystem":
-                insert(userId,"更新系统值"+ GsonUtils.toJson(param));
+                insert(userId,"更新系统值"+ param);
+                break;
+            case "login":
+                insert(userId,"登陆"+ param);
+                break;
+            case "revise":
+                String str = param.substring(param.indexOf("password") + 9, param.indexOf("roleId") - 2);
+                String encode = "";
+                if (str.equals("")){
+
+                }else {
+                    encode = passwordEncoder.encode(str);
+                }
+                param.replace("password=","password="+encode);
+
+                insert(userId,"修改密码"+param);
+                break;
+            case "updateAdminUser":
+                insert(userId,"修改管理员信息"+param);
+                break;
+            case "delAdminUser":
+                insert(userId,"删除管理员"+param);
+                break;
+            case "updateRolePower":
+                insert(userId,"修改角色组"+param);
+                break;
+            case "delRole":
+                insert(userId,"删除角色组"+param);
+                break;
+            case "addRoleInfo":
+                insert(userId,"添加角色组"+param);
                 break;
 
         }
@@ -117,10 +158,10 @@ public class LogAspect {
 
     public void insert(Integer userId,String msg){
         OperationLog operationLog = new OperationLog();
-
         operationLog.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
         operationLog.setUserId(userId);
         operationLog.setMsg(msg);
+
         operationLogService.logInsert(operationLog);
 
     }

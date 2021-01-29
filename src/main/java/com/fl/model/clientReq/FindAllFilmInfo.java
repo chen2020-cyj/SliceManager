@@ -17,7 +17,7 @@ public class FindAllFilmInfo {
 
     private String categoryId;
 
-    private String filmId;
+    private String filmName;
 
     private String whetherUpload;
 }

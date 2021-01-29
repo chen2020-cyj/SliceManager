@@ -1,7 +1,10 @@
 package com.fl.model.clientReq;
 
+import com.fl.model.AddTaskMinio;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
+import java.util.List;
 
 @Data
 public class AddSegmentQueue {
@@ -18,12 +21,13 @@ public class AddSegmentQueue {
 
     private String subtitleSuffix;
 
-    private Object minioInfo;
+    private List<AddTaskMinio> minioInfo;
 
     private String language;
 
     private String doubanId;
 
+    private String filmRandom;
 
 //    private String token;
 //

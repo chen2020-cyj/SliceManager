@@ -118,7 +118,6 @@ public class FilmSourceController {
 
             ResFilmSource resFilmSource = filmSource(filmSourceRecord);
 
-
             resFilmData.setCode(0);
             resFilmData.setMsg("success");
             resFilmData.setData(resFilmSource);
@@ -189,11 +188,11 @@ public class FilmSourceController {
 
         String visitUrlId = FilmSourceRecord.getVisitUrlId();
         VisitUrl visitUrl = visitService.selectById(Integer.valueOf(visitUrlId));
-        LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(FilmSourceRecord.getLanguageId()));
+//        LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(FilmSourceRecord.getLanguageId()));
         List<UploadUrl> list = gson.fromJson(visitUrl.getMinioUrl(), new TypeToken<List<UploadUrl>>() {
         }.getType());
         resFilmSource.setMinioUrl(list);
-        resFilmSource.setLanguage(languageInfo.getLanguage());
+//        resFilmSource.setLanguage(languageInfo.getLanguage());
 
         return resFilmSource;
     }

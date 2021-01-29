@@ -83,8 +83,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/distributionTask").permitAll()
                 .antMatchers("/taskState").permitAll()
                 .antMatchers("/token").permitAll()
-                .antMatchers("/distributionTask").permitAll()
                 .antMatchers("/picUpload").permitAll()
+//                .antMatchers("/druid/*").permitAll()
 //                .antMatchers("/login").permitAll()
                 //所有接口都要验证
                 .anyRequest().authenticated()

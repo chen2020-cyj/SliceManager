@@ -45,7 +45,7 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
      */
     public List<TaskManager> selectAllSegment(){
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("''","");
+        wrapper.eq("''","").and(i->i.eq("delete_flag","0"));
 
         return taskManagerMapper.selectList(wrapper);
     }
@@ -66,7 +66,7 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
     public List<TaskManager> selectSegmentList(String resolvingPower,String languageId,String doubanId){
 
         QueryWrapper<TaskManager> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("douban_id",doubanId).and(Wrapper->Wrapper.eq("resolving_power",resolvingPower)).and(Wrapper->Wrapper.eq("language_id",languageId)).and(Wrapper->Wrapper.ne("delete_flag","0"));
+        queryWrapper.eq("douban_id",doubanId).and(Wrapper->Wrapper.eq("resolving_power",resolvingPower)).and(Wrapper->Wrapper.eq("language_id",languageId)).and(Wrapper->Wrapper.ne("delete_flag","1"));
         return taskManagerMapper.selectList(queryWrapper);
     }
 
@@ -220,19 +220,19 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
         switch (id){
             case 1:
                 //  downloadState不传 linkState不传 id = 1
-                queryWrapper.eq("''","").and(Wrapper->Wrapper.ne("delete_flag","0"));
+                queryWrapper.eq("''","").and(Wrapper->Wrapper.ne("delete_flag","1"));
                 break;
             case 2:
                 // downloadState不传 linkState传 id = 2
-                queryWrapper.eq("link_state",task.getLinkState()).and(Wrapper->Wrapper.ne("delete_flag","0"));
+                queryWrapper.eq("link_state",task.getLinkState()).and(Wrapper->Wrapper.ne("delete_flag","1"));
                 break;
             case 3:
                 // downloadState传 linkState不传 id = 3
-                queryWrapper.eq("download_state",task.getDownloadState()).and(Wrapper->Wrapper.ne("delete_flag","0"));
+                queryWrapper.eq("download_state",task.getDownloadState()).and(Wrapper->Wrapper.ne("delete_flag","1"));
                 break;
             case 4:
                 //downloadState传 linkState传 id = 4
-                queryWrapper.eq("download_state",task.getDownloadState()).and(Wrapper->Wrapper.eq("link_state",task.getLinkState())).and(Wrapper->Wrapper.ne("delete_flag","0"));
+                queryWrapper.eq("download_state",task.getDownloadState()).and(Wrapper->Wrapper.eq("link_state",task.getLinkState())).and(Wrapper->Wrapper.ne("delete_flag","1"));
                 break;
 
         }
@@ -242,5 +242,14 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
         resTaskInfoMapper.setIPage(taskManagerMapper.selectPage(iPage,queryWrapper));
 
         return resTaskInfoMapper;
+    }
+    /**
+     * 根据语言  还有 豆瓣Id进行查找
+     */
+    public List<TaskManager> selectByLanDbId(Integer languageId,String doubanId){
+        QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
+        wrapper.eq("language_id",languageId).and(i->i.eq("douban_id",doubanId));
+
+        return taskManagerMapper.selectList(wrapper);
     }
 }

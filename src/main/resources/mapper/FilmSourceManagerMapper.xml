@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.fl.mapper.FilmSourceMapper">
+
+
+<!--    <select id="findMenuByRoleId" resultType="com.fl.entity.FilmSourceRecord">-->
+<!--        select * from filmsource_manager limit #{offset},#{page};-->
+<!--    </select>-->
+    <!---->
+    <select id="selectByFilmInfoId" resultType="com.fl.entity.VisitUrl">
+        select v.* from filmsource_manager as f left join visit_url as v on f.visit_id=v.id where f.film_info_id = #{filmInfoId};
+    </select>
+</mapper>

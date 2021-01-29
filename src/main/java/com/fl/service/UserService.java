@@ -55,7 +55,6 @@ public class UserService extends ServiceImpl<UserMapper, User> {
 
     public List<User> testtt(){
         QueryWrapper<User> wrapper = new QueryWrapper<>();
-
         wrapper.eq("''","");
 
         return  userMapper.selectList(wrapper);
@@ -66,5 +65,14 @@ public class UserService extends ServiceImpl<UserMapper, User> {
         wrapper.eq("token",token);
 
         return  userMapper.selectOne(wrapper);
+    }
+    public User selectByUserId(Integer userId){
+        return userMapper.selectById(userId);
+    }
+    public List<User> selectAll(){
+        QueryWrapper<User> wrapper = new QueryWrapper<>();
+        wrapper.eq("''","");
+
+        return userMapper.selectList(wrapper);
     }
 }

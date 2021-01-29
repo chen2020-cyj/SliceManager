@@ -10,7 +10,7 @@ public class ResToken {
 
     private String expiration;
 
-    private Object menu;
+//    private Object menu;
 
 //    private
 }

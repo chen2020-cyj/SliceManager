@@ -41,10 +41,6 @@ public class FilmSourceRecord {
     @TableField("visit_id")
     private String visitUrlId;
     /**
-     * 对应语言表
-     */
-    private String languageId;
-    /**
      * 预删除
      */
     private String deleteFlag;

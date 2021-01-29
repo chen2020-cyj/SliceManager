@@ -15,6 +15,8 @@ public class FilmInfo {
     @TableId(type = IdType.AUTO)
     private int id;
 
+    private String filmId;
+    
     private String chineseName;//中文名
 
     private String englishName;//英文名

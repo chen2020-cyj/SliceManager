@@ -10,16 +10,10 @@ import lombok.Data;
 public class VisitUrl {
     @TableId(type = IdType.AUTO)
     private Integer id;
-
     /**
-     * cdn路径  json 消息体
+     * 字幕链接路径  json消息体
      */
-    private String cdnUrl;
-
-    /**
-     * ngixn路径  json消息体
-     */
-    private String nginxUrl;
+    private String subtitleUrl;
 
     /**
      * 存储桶路径  json消息体
@@ -30,6 +24,8 @@ public class VisitUrl {
      * 对应片源filmId
      */
     private String doubanId;
+
+    private String language;
 
     private String createTime;
 

@@ -10,9 +10,11 @@ public class Register {
 
     private String password;
 
-    private Integer groupId;
-
-    
+//    private Integer groupId;
+    /**
+     * 角色组 Id
+     */
+    private Integer roleId;
 //    private String token;
 //
 //    private Integer userId;

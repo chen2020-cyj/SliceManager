@@ -8,11 +8,13 @@ import java.util.List;
 public class Authority {
     private Integer id;
 
-    private String mainMenu;
+    private String name;
 
-    private String mainMenuUrl;
+    private String path;
 
     private String icon;
 
-    private Object list;
+    private String viewUrl;
+
+    private Object children;
 }

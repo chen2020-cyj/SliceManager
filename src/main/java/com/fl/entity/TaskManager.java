@@ -16,6 +16,11 @@ public class TaskManager {
      */
     private String filmId;
     /**
+     * 对应电影信息表id
+     */
+    @TableField(value = "film_random")
+    private String filmRandom;
+    /**
      * 对应存储桶的id
      */
     private String minioId;

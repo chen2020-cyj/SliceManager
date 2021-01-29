@@ -2,15 +2,20 @@ package com.fl.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
 @Data
-@TableName(value = "rule")//指定表名
-public class Rule {
+public class RoleInfo {
     @TableId(type = IdType.AUTO)
     private Integer id;
 
-    private String roles;
+    private Integer pid;
 
+    private String name;
+
+    private Integer deleteFlag;
+
+    private String createTime;
+
+    private String updateTime;
 }

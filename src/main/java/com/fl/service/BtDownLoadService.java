@@ -28,4 +28,10 @@ public class BtDownLoadService extends ServiceImpl<BtDownLoadMapper, BtDownLoad>
 
         btDownLoadMapper.update(bt,wrapper);
     }
+    public void delByFilmId(String filmId){
+        QueryWrapper<BtDownLoad> wrapper = new QueryWrapper<>();
+        wrapper.eq("film_id",filmId);
+
+        btDownLoadMapper.delete(wrapper);
+    }
 }

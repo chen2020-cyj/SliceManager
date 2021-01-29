@@ -3,7 +3,8 @@ package com.fl.control;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fl.aop.annotation.Log;
 import com.fl.entity.MinioInfo;
-import com.fl.entity.NginxManager;
+
+import com.fl.entity.SystemManager;
 import com.fl.entity.TaskManager;
 import com.fl.entity.User;
 import com.fl.model.MinioData;
@@ -18,7 +19,7 @@ import com.fl.model.clientRes.ResData;
 import com.fl.model.clientRes.ResFilmData;
 import com.fl.model.clientRes.ResMinio;
 import com.fl.service.MinioInfoService;
-import com.fl.service.NginxManagerService;
+import com.fl.service.SystemManagerService;
 import com.fl.service.TaskManagerService;
 import com.fl.service.UserService;
 import com.fl.utils.GsonUtils;
@@ -61,7 +62,7 @@ public class MinioController {
     private TaskManagerService taskManagerService;
 
     @Autowired
-    private NginxManagerService nginxManagerService;
+    private SystemManagerService systemManagerService;
 
 
     private static final String url ="http://192.168.116.134:10110/addNginxConf";
@@ -150,17 +151,18 @@ public class MinioController {
         List<MinioInfo> minioInfoList = minioInfoService.selectAllMinio();
         List<MinioInfo> list = new ArrayList<>();
 
+        SystemManager systemManager = systemManagerService.selectByOne(1);
+
         //剩余容量
         double availableCapacity = 0.0;
         String definition = "";
         for (int i = 0; i < minioInfoList.size(); i++) {
-            if ( minioInfoList.get(i).getAvailableCapacity() > 10) {
+            if ( minioInfoList.get(i).getAvailableCapacity() > systemManager.getReadyMinioCapacity()) {
                 if (definition.equals("")){
                     definition = minioInfoList.get(i).getResolvingPower();
                 }else {
                     definition = definition + "," + minioInfoList.get(i).getResolvingPower();
                 }
-
             }else {
                 list.add(minioInfoList.get(i));
             }
@@ -228,94 +230,59 @@ public class MinioController {
 //        return GsonUtils.toJson(resMinioData);
 
     }
-    @Log("user:updateMinio")
+        @Log("user:updateMinio")
         @ApiOperation("无法运行的存储桶")
         @PostMapping(value = "/updateMinio",produces = "application/json;charset=UTF-8")
         public ResData updateMinio(@RequestBody ReqChangeMinio reqChangeMinio) {
-            String filmId = getRandomString(10);
-            MinioInfo minio = minioInfoService.findMinio(reqChangeMinio.getId());
-            minio.setUsageStatus("1");
-            minioInfoService.updateMinio(minio,minio.getId());
-            ResData data = new ResData();
-            //算出已用空间
-            double usedCapacity = minio.getTotalCapacity() - minio.getAvailableCapacity();
-            //查找该清晰度的存储桶分配一个出去
-            MinioInfo info = new MinioInfo();
-            List<MinioInfo> minioInfoList = minioInfoService.findMinioByResolvingPower(minio.getResolvingPower());
-            for (int i =0;i<minioInfoList.size();i++){
+        String filmId = getRandomString(10);
+        MinioInfo minio = minioInfoService.findMinio(reqChangeMinio.getId());
+        minio.setUsageStatus("1");
+        minioInfoService.updateMinio(minio, minio.getId());
+        ResData data = new ResData();
+        //算出已用空间
+        double usedCapacity = minio.getTotalCapacity() - minio.getAvailableCapacity();
+        //查找该清晰度的存储桶分配一个出去
+        MinioInfo info = new MinioInfo();
+        List<MinioInfo> minioInfoList = minioInfoService.findMinioByResolvingPower(minio.getResolvingPower());
+        for (int i = 0; i < minioInfoList.size(); i++) {
 //                double capacity = minioInfoList.get(i).getTotalCapacity()-minioInfoList.get(i).getAvailableCapacity();
-                if (minioInfoList.get(i).getAvailableCapacity() >usedCapacity){
-                    System.out.println(minioInfoList.get(i));
-                    info = minioInfoList.get(i);
-                    break;
-                }
+            if (minioInfoList.get(i).getAvailableCapacity() > usedCapacity) {
+                System.out.println(minioInfoList.get(i));
+                info = minioInfoList.get(i);
+                break;
             }
-
-            if (info.getId() != null){
-                List<TaskManager> taskManagerList = taskManagerService.selectAllSegment();
-                List<TaskManager> list = new ArrayList<>();
-                for (int i = 0; i < taskManagerList.size(); i++) {
-                    if (taskManagerList.get(i).getMinioId().contains(String.valueOf(reqChangeMinio.getId()))) {
-                        list.add(taskManagerList.get(i));
-                    }
-                }
-                for (int i=0;i<list.size();i++){
-                    list.get(i).setMinioId(String.valueOf(info.getId()));
-                    list.get(i).setFilmId(filmId);
-                    info.setAvailableCapacity(info.getTotalCapacity()-Double.valueOf(list.get(i).getFilmSize()));
-                    info.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
-                    minioInfoService.updateMinio(info,info.getId());
-                    taskManagerService.insertSegment(list.get(i));
-                }
-                data.setCode(0);
-                data.setMsg("success");
-                data.setData("");
-                return data;
-            }else {
-                data.setCode(1);
-                data.setMsg("error");
-                data.setData("");
-                return data;
-            }
-
         }
 
-    public  void addNginxUrl(String ip,Integer minioId){
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .writeTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .build();
-        final Request request = new Request.Builder()
-                .url("")//请求的url
-                .post(formBody(minioId,ip))
-                .build();
-        //创建/Call
-        Call call = okHttpClient.newCall(request);
-        //加入队列 异步操作
-        call.enqueue(new Callback() {
-            //请求错误回调方法
-            @Override
-            public void onFailure(Call call, IOException e) {
-                System.out.println("连接失败");
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.code() == 200) {
-                    ResData resData = gson.fromJson(response.body().string(), ResData.class);
-                    if (resData.getCode() == 0){
-                        NginxManager nginxManager = new NginxManager();
-                        nginxManager.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
-                        nginxManager.setNginxUrl(String.valueOf(resData.getData()));
-                        nginxManager.setMinioId(minioId);
-                        nginxManagerService.insertNginxUrl(nginxManager);
-                    }
-//                    System.out.println(response.body().string());
+        if (info.getId() != null) {
+            List<TaskManager> taskManagerList = taskManagerService.selectAllSegment();
+            List<TaskManager> list = new ArrayList<>();
+            for (int i = 0; i < taskManagerList.size(); i++) {
+                if (taskManagerList.get(i).getMinioId().contains(String.valueOf(reqChangeMinio.getId()))) {
+                    list.add(taskManagerList.get(i));
                 }
             }
-        });
+            for (int i = 0; i < list.size(); i++) {
+                list.get(i).setMinioId(String.valueOf(info.getId()));
+                list.get(i).setFilmId(filmId);
+                info.setAvailableCapacity(info.getTotalCapacity() - Double.valueOf(list.get(i).getFilmSize()));
+                info.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
+                minioInfoService.updateMinio(info, info.getId());
+                taskManagerService.insertSegment(list.get(i));
+            }
+            data.setCode(0);
+            data.setMsg("success");
+            data.setData("");
+            return data;
+        } else {
+            data.setCode(1);
+            data.setMsg("error");
+            data.setData("");
+            return data;
+        }
+
     }
+
+
     public static FormBody formBody(Integer id ,String ip){
         Map<String,Object> map = new ConcurrentHashMap<>();
         map.put("id",id);

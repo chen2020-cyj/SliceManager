@@ -10,6 +10,7 @@ import com.fl.entity.User;
 import com.fl.service.UserService;
 
 import com.fl.utils.JwtUtils;
+import com.fl.utils.PowerUtils;
 import com.fl.utils.TokenUtils;
 import io.jsonwebtoken.ExpiredJwtException;
 import org.slf4j.Logger;
@@ -29,7 +30,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class TokenInterceptor extends GenericFilterBean {
@@ -50,11 +52,33 @@ public class TokenInterceptor extends GenericFilterBean {
         String uri = httpServletRequest.getServletPath();
 
         HttpServletResponse httpResponse = (HttpServletResponse) servletResponse;
+
+//        System.out.println(token);
+        if (uri.equals("/login")){
+//            System.out.println("进来了");
+            filterChain.doFilter(servletRequest,servletResponse);
+            return;
+        }else if (uri.equals("/updateToken")){
+            filterChain.doFilter(servletRequest,servletResponse);
+            return;
+        }else if (uri.equals("/picUpload")){
+            filterChain.doFilter(servletRequest,servletResponse);
+            return;
+        }else if (uri.equals("/signOut")){
+            filterChain.doFilter(servletRequest,servletResponse);
+            return;
+        }
+
         if (token != null){
+
             String verify = JwtUtils.tokenInfo(token,"userId");
 
             User user = null;
             try {
+//                if (verify == null){
+//                    List<String> list = new ArrayList<>();
+//                    list.get(0);
+//                }
                 user = TokenUtils.getToken(verify);
 
                 if (!token.contains(user.getToken())){
@@ -64,14 +88,18 @@ public class TokenInterceptor extends GenericFilterBean {
             }catch (ArithmeticException e) {
                 servletRequest.setAttribute("filter.error", "token.err");
                 servletRequest.getRequestDispatcher("/tokenError").forward(servletRequest, servletResponse);
+            }catch (IndexOutOfBoundsException e){
+                servletRequest.setAttribute("filter.error", "token.err");
+                servletRequest.getRequestDispatcher("/tokenOverTime").forward(servletRequest, servletResponse);
             }
-            catch (Exception e){
-
-//                e.printStackTrace();
-//                logger.error(e.getMessage());
-            }
+//            catch (Exception e){
+//
+////                e.printStackTrace();
+////                logger.error(e.getMessage());
+//            }
             if (user != null){
-                Authentication authentication = tokenProvider.getAuthentication(token);
+                String power = PowerUtils.getPower(user.getUsername());
+                Authentication authentication = tokenProvider.getAuthentication(power);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }

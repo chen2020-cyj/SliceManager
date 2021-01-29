@@ -36,9 +36,9 @@ public class VisitService extends ServiceImpl<VisitUrlMapper, VisitUrl> {
     /**
      * 根据filmId  更新数据
      */
-    public void updateFilmId(String filmId,VisitUrl visitUrl){
+    public void updateByDouBanId(String doubanId,VisitUrl visitUrl){
         QueryWrapper<VisitUrl> wrapper = new QueryWrapper<>();
-        wrapper.eq("douban_id",filmId);
+        wrapper.eq("douban_id",doubanId);
 
         visitUrlMapper.update(visitUrl,wrapper);
     }

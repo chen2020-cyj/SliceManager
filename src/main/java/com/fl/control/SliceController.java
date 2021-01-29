@@ -3,6 +3,9 @@ package com.fl.control;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.fl.entity.*;
+import com.fl.kafka.data.KafkaMessage;
+import com.fl.kafka.data.KafkaTitles;
+import com.fl.kafka.producer.KafkaProducer;
 import com.fl.model.*;
 import com.fl.model.clientRes.ReqSliceServer;
 import com.fl.model.clientRes.ResData;
@@ -43,17 +46,19 @@ public class SliceController {
     private FilmInfoService filmInfoService;
     @Autowired
     private VisitService visitService;
+
     @Autowired
-    private NginxManagerService nginxManagerService;
+    private LanguageInfoService languageInfoService;
 
     private ResData res = new ResData();
     private Gson gson = new Gson();
 
     private Msg msg = new Msg();
-    private ResSegmentManager resSegment = new ResSegmentManager();
+
     @ApiOperation("分配任务")
     @PostMapping(value = "/distributionTask",produces = "application/json;charset=UTF-8")
     public ResSegmentManager distributionTask(){
+        ResSegmentManager resSegment = new ResSegmentManager();
 
         Map<String,String> serverInfo = new HashMap<>();
 
@@ -73,10 +78,10 @@ public class SliceController {
 
                 taskManagerService.updateIdTask(listTask.get(0).getFilmId(),"1");
 
-//                resSegment.setSubtitleUrl(listTask.get(0).getSubtitleUrl());
                 resSegment.setSubtitleUrl(listTask.get(0).getSubtitleUrl());
                 resSegment.setResolvingPower(listTask.get(0).getResolvingPower()+"P");
                 resSegment.setFilmId(listTask.get(0).getFilmId());
+                resSegment.setFilmRandom(listTask.get(0).getFilmRandom());
                 resSegment.setBtUrl(listTask.get(0).getBtUrl());
                 resSegment.setSubtitleSuffix(listTask.get(0).getSubtitleSuffix());
                 resSegment.setMsg(serverInfo);
@@ -106,10 +111,10 @@ public class SliceController {
                         str =str + "," +split2[i]+"P";
                     }
                 }
-
                 resSegment.setSubtitleUrl(listTask.get(0).getSubtitleUrl());
                 resSegment.setResolvingPower(str);
                 resSegment.setFilmId(listTask.get(0).getFilmId());
+                resSegment.setFilmRandom(listTask.get(0).getFilmRandom());
                 resSegment.setBtUrl(listTask.get(0).getBtUrl());
                 resSegment.setMsg(serverInfo);
                 resSegment.setSubtitleSuffix(listTask.get(0).getSubtitleSuffix());
@@ -164,15 +169,23 @@ public class SliceController {
                     long startTime =Long.valueOf(btDownLoad.getStartTime());
 
                     long time = currentTime - startTime;
-                    if (time> (60*10)){
+                    if (time > (60*10)){
                         resData.setCode(1);
                         resData.setMsg("任务超时");
                         resData.setData(GsonUtils.toJson(btDownLoad));
 
+                        btDownLoadService.delByFilmId(reqSliceServer.getFilmId());
                         taskManagerService.updateIdLinkState(filmId,"1003");
+                        return resData;
+                    }else {
+                        resData.setCode(2);
+                        resData.setMsg("任务可以继续下载");
+                        resData.setData(GsonUtils.toJson(btDownLoad));
+
                         return resData;
                     }
                 }else {
+                    btDownLoad.setBtState(bitTorrent.getDone());
                     btDownLoad.setStartTime(String.valueOf(System.currentTimeMillis()/1000));
                     btDownLoad.setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
 
@@ -227,7 +240,6 @@ public class SliceController {
                 break;
             case 2003:
                 //320开始切片
-
                 segmentStart(reqSliceServer);
                 break;
             case 2011:
@@ -290,7 +302,12 @@ public class SliceController {
      * @param reqSliceServer
      */
     private void segmentStart(ReqSliceServer reqSliceServer) {
+        BtDownLoad bt = btDownLoadService.selectByFilmId(reqSliceServer.getFilmId());
+        if (bt == null){
 
+        }else {
+            btDownLoadService.delByFilmId(bt.getFilmId());
+        }
         TaskManager taskManager = taskManagerService.selectByFilmId(reqSliceServer.getFilmId());
         if (!taskManager.getDownloadState().equals("3")){
             taskManager.setDownloadState("3");
@@ -437,26 +454,6 @@ public class SliceController {
 
             }
         }
-//
-//        if (!segmentState.getSegmentStart().contains(",")){
-//            segmentState.setSegmentStart("");
-//        }else {
-//            String[] split = segmentState.getSegmentStart().split(",");
-//            String str = "";
-//            for (int i=0;i<split.length;i++){
-//                if (code.equals(split[i])){
-//
-//                }else {
-//                    if (str.equals("")){
-//                        str = split[i];
-//                    }else {
-//                        str = str+","+split[i];
-//                    }
-//                }
-//            }
-//            segmentState.setSegmentStart(str);
-//        }
-
     }
 
     /**
@@ -587,17 +584,16 @@ public class SliceController {
             }else {
                 segmentUploadState = GsonUtils.fromJson(uploadState, SegmentUploadState.class);
             }
-
-            MinioBackMessage minioBackMessage = GsonUtils.fromJson(String.valueOf(reqSliceServer.getData()), MinioBackMessage.class);
+            MinioBackMessage minioBackMessage = GsonUtils.fromJson(GsonUtils.toJson(reqSliceServer.getData()), MinioBackMessage.class);
             switch (code){
                 case "6003":
-                    uploadDecide(segmentUploadState,"6013",taskManager,minioBackMessage,reqSliceServer);
+                    uploadDecide(segmentUploadState,code,taskManager,minioBackMessage,reqSliceServer);
                     break;
                 case "6004":
-                    uploadDecide(segmentUploadState,"6014",taskManager,minioBackMessage,reqSliceServer);
+                    uploadDecide(segmentUploadState,code,taskManager,minioBackMessage,reqSliceServer);
                     break;
                 case "6005":
-                    uploadDecide(segmentUploadState,"6015",taskManager,minioBackMessage,reqSliceServer);
+                    uploadDecide(segmentUploadState,code,taskManager,minioBackMessage,reqSliceServer);
                     break;
             }
 //            taskManagerService.updateUploadState(reqSliceServer.getFilmId(),GsonUtils.toJson(segmentUploadState));
@@ -606,14 +602,19 @@ public class SliceController {
     private void uploadDecide(SegmentUploadState segmentUploadState,String code,TaskManager taskManager,MinioBackMessage minioBackMessage,ReqSliceServer reqSliceServer) {
 
         String newCode = "";
+        String resolvingPower = "";
         if (code.equals("6003")) {
             newCode = "6013";
+            resolvingPower = "720";
         } else if (code.equals("6004")) {
             newCode = "6014";
+            resolvingPower = "480";
         } else if (code.equals("6005")) {
             newCode = "6015";
+            resolvingPower = "320";
         }
 
+        System.out.println("对应的清晰度为:"+resolvingPower);
         if (segmentUploadState.getSegmentUploadComplete().equals("")) {
             segmentUploadState.setSegmentUploadComplete(newCode);
         } else {
@@ -630,16 +631,16 @@ public class SliceController {
             }
         }
 
-        String resolvingPower = "";
+
         String minioId = taskManager.getMinioId();
         MinioInfo minioInfo = new MinioInfo();
-        if (code.equals("6013")) {
-            resolvingPower = "720";
-        } else if (code.equals("6014")) {
-            resolvingPower = "480";
-        } else if (code.equals("6015")) {
-            resolvingPower = "320";
-        }
+//        if (code.equals("6003")) {
+//
+//        } else if (code.equals("6004")) {
+//
+//        } else if (code.equals("6005")) {
+//
+//        }
         Integer newMinioId = 0;
         taskManager.setUploadState(GsonUtils.toJson(segmentUploadState));
         taskManager.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
@@ -676,29 +677,26 @@ public class SliceController {
         List<UploadUrl> urlList = new ArrayList<>();
         UploadUrl uploadUrl = uploadUrl(resolvingPower, minioBackMessage.getUrl());
         urlList.add(uploadUrl);
-
+        LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(taskManager.getLanguageId()));
 //        VisitUrl visitUrl = newVisitUrl(taskManager,urlList);
         VisitUrl visitUrl1 = visitService.selectByDouBanId(taskManager.getDoubanId());
 
         if (visitUrl1.getMinioUrl().equals("")) {
-//            List<NginxUrlInfo> nginxUrlInfoList = new ArrayList<>();
-//            NginxUrlInfo nginxUrlInfo = new NginxUrlInfo();
-//            nginxUrlInfo.setResolving(uploadUrl.getResolving());
-//
-//            NginxManager nginxManager = nginxManagerService.selectByMinioId(newMinioId);
 
-//            String nginxUrl = newNginxUrl(minioBackMessage.getUrl(),nginxManager.getNginxUrl());
-//            nginxUrlInfo.setUrl(nginxUrl);
-//            nginxUrlInfoList.add(nginxUrlInfo);
             List<UploadUrl> uploadUrls = new ArrayList<>();
-
             UploadUrl uploadUrl1 = uploadUrl(resolvingPower, minioBackMessage.getUrl());
-
             uploadUrls.add(uploadUrl1);
-//            visitUrl1.setNginxUrl(GsonUtils.toJson(nginxUrlInfoList));
+
+//            Map<String,Map<String,String>> languageMap = new HashMap<>();
+//            Map<String,String> map = new HashMap<>();
+//            map.put(resolvingPower,minioBackMessage.getUrl());
+//
+//            languageMap.put(languageInfo.getLanguage(),map);
+
+
             visitUrl1.setMinioUrl(GsonUtils.toJson(uploadUrls));
             visitUrl1.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
-            visitService.updateFilmId(taskManager.getDoubanId(), visitUrl1);
+            visitService.updateByDouBanId(taskManager.getDoubanId(), visitUrl1);
         } else {
 //            UploadUrl uploadUrl1 = new UploadUrl();
 //            NginxUrlInfo nginxUrlInfo = new NginxUrlInfo();
@@ -706,59 +704,55 @@ public class SliceController {
             System.out.println(visitUrl1.getMinioUrl());
 
 //            NginxManager nginxManager = nginxManagerService.selectByMinioId(newMinioId);
+//            Map map = GsonUtils.fromJson(visitUrl1.getMinioUrl(), Map.class);
 
+//            Map map1 = GsonUtils.fromJson(GsonUtils.toJson(map.get(languageInfo.getLanguage())), Map.class);
+//            if (map1.containsKey(resolvingPower)){
+//                map1.replace(resolvingPower,minioBackMessage.getUrl());
+//            }else {
+//                map1.put(resolvingPower,minioBackMessage.getUrl());
+//            }
+//            if (map.containsKey(languageInfo.getLanguage())){
+//                map.replace(languageInfo.getLanguage(),map1);
+//            }
             List<UploadUrl> uploadUrlList = gson.fromJson(visitUrl1.getMinioUrl(), new TypeToken<List<UploadUrl>>() {
             }.getType());
 
-//
-//            List<NginxUrlInfo> nginxUrlInfoList = gson.fromJson(visitUrl1.getNginxUrl(), new TypeToken<List<NginxUrlInfo>>() {
-//            }.getType());
 
-//            for (int i = 0;i<nginxUrlInfoList.size();i++){
-//                if (nginxUrlInfoList.get(i).getResolving().equals(resolvingPower)){
-//                    nginxUrlInfoList.get(i).setUrl(minioBackMessage.getUrl());
-//                }else {
-//                    String nginxUrl = newNginxUrl(minioBackMessage.getUrl(), nginxManager.getNginxUrl());
-//                    nginxUrlInfo.setResolving(resolvingPower);
-//                    nginxUrlInfo.setUrl(nginxUrl);
-//                }
-//            }
             UploadUrl uploadUrl2 = uploadUrl(resolvingPower, minioBackMessage.getUrl());
-            uploadUrlList.add(uploadUrl2);
-//            for (int i = 0; i < uploadUrlList.size(); i++) {
-//                if (uploadUrlList.get(i).getResolving().equals(resolvingPower)){
-//                    uploadUrlList.get(i).setUrl(minioBackMessage.getUrl());
-//                }else {
-//
-//                    uploadUrl1.setResolving(resolvingPower);
-//                    uploadUrl1.setUrl(minioBackMessage.getUrl());
-//                }
-//            }
-//            nginxUrlInfoList.add(nginxUrlInfo);
-            uploadUrlList.add(uploadUrl);
-//            visitUrl.setNginxUrl(GsonUtils.toJson(nginxUrlInfoList));
-            visitUrl1.setMinioUrl(GsonUtils.toJson(uploadUrlList));
-            visitService.updateFilmId(taskManager.getFilmId(), visitUrl1);
-        }
 
+            uploadUrlList.add(uploadUrl2);
+
+            visitUrl1.setMinioUrl(GsonUtils.toJson(uploadUrlList));
+            visitService.updateByDouBanId(taskManager.getDoubanId(), visitUrl1);
+        }
 
         //查询电影信息表
         IPage<FilmInfo> infoIPage = filmInfoService.selectByDouBanId(taskManager.getDoubanId());
         List<FilmInfo> filmInfos = infoIPage.getRecords();
         //更新电影信息表 更新状态为已分配
+        System.out.println(filmInfos);
         filmInfos.get(0).setWhetherUpload("1");
         filmInfoService.updateByFilmInfoId(filmInfos.get(0));
 
 //            filmSourceRecord.setVisitUrlId(String.valueOf());
 //        FilmSourceRecord film = filmSourceService.findFilm(taskManager.getDoubanId());
-        FilmSourceRecord filmSourceRecord = newFilmSourceRecord(taskManager, visitUrl1.getId());
+        FilmSourceRecord filmSourceRecord1 = filmSourceService.selectByFilmId(taskManager.getFilmId());
+        if (filmSourceRecord1 == null){
+            FilmSourceRecord filmSourceRecord = newFilmSourceRecord(taskManager, visitUrl1.getId());
 //        filmSourceService.addFilmSource(filmSourceRecord);
 //        if (film == null) {
-        filmSourceRecord.setVisitUrlId(String.valueOf(visitUrl1.getId()));
-        filmSourceRecord.setFilmInfoId(filmInfos.get(0).getId());
-        filmSourceService.addFilmSource(filmSourceRecord);
-//        }
-//        }
+            KafkaProducer kafkaProducer = new KafkaProducer();
+
+            KafkaMessage message = new KafkaMessage();
+            message.setTitle(KafkaTitles.redisUpdateId);
+            message.setData(filmInfos.get(0).getId());
+            kafkaProducer.send(message);
+
+            filmSourceRecord.setVisitUrlId(String.valueOf(visitUrl1.getId()));
+            filmSourceRecord.setFilmInfoId(filmInfos.get(0).getId());
+            filmSourceService.addFilmSource(filmSourceRecord);
+        }
 
     }
     public UploadUrl uploadUrl(String resolvingPower,String uploadUrl){
@@ -770,8 +764,8 @@ public class SliceController {
     }
     public static VisitUrl newVisitUrl(TaskManager taskManager,List<UploadUrl> list){
         VisitUrl visitUrl = new VisitUrl();
-        visitUrl.setCdnUrl("");
-        visitUrl.setNginxUrl("");
+//        visitUrl.setCdnUrl("");
+//        visitUrl.setNginxUrl("");
         visitUrl.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
         visitUrl.setDoubanId(taskManager.getDoubanId());
         visitUrl.setMinioUrl(GsonUtils.toJson(list));
@@ -789,7 +783,7 @@ public class SliceController {
         filmSourceRecord.setResolvingPower(taskManager.getResolvingPower());
 //            filmSourceRecord.setMinioUrl(taskManager1.getMinioUrl());
         filmSourceRecord.setUpdateTime("");
-        filmSourceRecord.setLanguageId(taskManager.getLanguageId());
+//        filmSourceRecord.setLanguageId(taskManager.getLanguageId());
         return  filmSourceRecord;
     }
 

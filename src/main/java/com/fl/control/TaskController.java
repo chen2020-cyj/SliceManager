@@ -42,6 +42,9 @@ public class TaskController {
     private LanguageInfoService languageInfoService;
     @Autowired
     private VisitService visitService;
+    @Autowired
+    private BtDownLoadService btDownLoadService;
+
 
 
     private ResData res = new ResData();
@@ -74,6 +77,17 @@ public class TaskController {
                 taskManager.setUploadState(segmentUploadState);
             }
 
+            if (taskManager.getDownloadState().equals("2")){
+                BtDownLoad bt = btDownLoadService.selectByFilmId(taskManager.getFilmId());
+                taskManager.setDownloadState(bt.getBtState());
+            }else if (taskManager.getDownloadState().equals("0")){
+                taskManager.setDownloadState("待分配");
+            }else if (taskManager.getDownloadState().equals("1")){
+                taskManager.setDownloadState("已分配");
+            }else if (taskManager.getDownloadState().equals("3")){
+                taskManager.setDownloadState("下载完成");
+            }
+
             resFilmData.setCode(0);
             resFilmData.setMsg("success");
             resFilmData.setData(taskManager);
@@ -82,11 +96,26 @@ public class TaskController {
             return  GsonUtils.toJson(resFilmData);
         }else {
             if (task.getSegmentState().equals("0")) {
+                //查看所有的任务
                 Integer integer = idChange(id, task);
                 ResTaskInfoMapper resTaskInfoMapper = segmentService.selectAllTaskManager(integer, task);
                 List<TaskManager> managerList = resTaskInfoMapper.getIPage().getRecords();
 
                 List<TaskManager> managerList1 = changeTaskManager(managerList);
+
+                for (int i = 0; i < managerList1.size(); i++) {
+                    if (managerList1.get(i).getDownloadState().equals("2")){
+                        BtDownLoad bt = btDownLoadService.selectByFilmId(managerList1.get(i).getFilmId());
+                        managerList1.get(i).setDownloadState(bt.getBtState());
+                    }else if (managerList1.get(i).getDownloadState().equals("0")){
+                        managerList1.get(i).setDownloadState("待分配");
+                    }else if (managerList1.get(i).getDownloadState().equals("1")){
+                        managerList1.get(i).setDownloadState("已分配");
+                    }else if (managerList1.get(i).getDownloadState().equals("3")){
+                        managerList1.get(i).setDownloadState("下载完成");
+                    }
+                }
+
                 resFilmData.setCode(0);
                 resFilmData.setMsg("success");
                 resFilmData.setData(managerList1);
@@ -94,6 +123,7 @@ public class TaskController {
 
                 return GsonUtils.toJson(resFilmData);
             } else {
+                //查看失败的任务
                 List<TaskManager> taskManagerList = new ArrayList<>();
                 List<TaskManager> managerList = segmentService.selectAllSegment();
                 Integer integer = idChange(id, task);
@@ -115,6 +145,12 @@ public class TaskController {
                 }
                 List<TaskManager> list = selectAllFailTask(integer, taskManagerList, task);
                 List<TaskManager> allFailTask = changeTaskManager(list);
+
+                for (int i = 0; i < allFailTask.size(); i++) {
+                    if (allFailTask.get(i).getDownloadState().equals("3")){
+                        allFailTask.get(i).setDownloadState("下载完成");
+                    }
+                }
 
                 Integer indexPage = (task.getPage()-1)*task.getOffset();
                 Integer offset = task.getOffset()*task.getPage();
@@ -173,14 +209,18 @@ public class TaskController {
             case 1:
                 //downloadState不传 linkState不传 id = 1
                 for (int i=0;i<managerList.size();i++){
-                    list.add(managerList.get(i));
+                    if (list.get(i).getDeleteFlag().equals("0")){
+                        list.add(managerList.get(i));
+                    }
                 }
                 break;
             case 2:
                 //downloadState不传 linkState传 id = 2
                 for (int i=0;i<managerList.size();i++){
                     if(managerList.get(i).getLinkState().equals(task.getLinkState())){
-                        list.add(managerList.get(i));
+                        if (list.get(i).getDeleteFlag().equals("0")){
+                            list.add(managerList.get(i));
+                        }
                     }
                 }
                 break;
@@ -188,7 +228,9 @@ public class TaskController {
                 //downloadState传 linkState不传 id = 3
                 for (int i=0;i<managerList.size();i++){
                     if(managerList.get(i).getDownloadState().equals(task.getDownloadState())){
-                        list.add(managerList.get(i));
+                        if (list.get(i).getDeleteFlag().equals("0")){
+                            list.add(managerList.get(i));
+                        }
                     }
                 }
                 break;
@@ -196,7 +238,9 @@ public class TaskController {
                 //downloadState传 linkState传 id = 4
                 for (int i=0;i<managerList.size();i++){
                     if(managerList.get(i).getDownloadState().equals(task.getDownloadState()) && managerList.get(i).getLinkState().equals(task.getLinkState())){
-                        list.add(managerList.get(i));
+                        if (list.get(i).getDeleteFlag().equals("0")){
+                            list.add(managerList.get(i));
+                        }
                     }
                 }
                 break;
@@ -219,7 +263,6 @@ public class TaskController {
                 SegmentUploadState segmentUploadState = gson.fromJson(String.valueOf(managerList.get(i).getUploadState()), SegmentUploadState.class);
                 managerList.get(i).setUploadState(segmentUploadState);
             }
-
         }
         return managerList;
     }
@@ -261,7 +304,28 @@ public class TaskController {
     @PostMapping(value = "/addFilmSource", produces = "application/json;charset=UTF-8")
     public ResData add(@RequestBody AddSegmentQueue queue) {
 
+        ResData data = new ResData();
         LanguageInfo languageInfo = languageInfoService.selectByLanguage(queue.getLanguage());
+        if (languageInfo == null){
+
+            data.setCode(7);
+            data.setMsg("没有这个语言");
+            data.setData("");
+
+            return data;
+        }
+        String newResolving = "";
+        if (queue.getResolvingPower().equals("")){
+            for (int i = 0; i < queue.getMinioInfo().size(); i++) {
+                if (newResolving.equals("")){
+                    newResolving = queue.getMinioInfo().get(i).getResolvingPower();
+                }else {
+                    newResolving = newResolving +","+queue.getMinioInfo().get(i).getResolvingPower();;
+                }
+            }
+        }else {
+            newResolving = queue.getResolvingPower();
+        }
 
         String resolvingPower = "";
         String minioId = "";
@@ -272,23 +336,23 @@ public class TaskController {
         } else if (queue.getFilmSize().contains("GB")) {
             filmSize = Double.valueOf(queue.getFilmSize().replace("GB", ""));
         }
-        List<AddTaskMinio> list = new ArrayList<>();
+        List<AddTaskMinio> list = queue.getMinioInfo();
 
-        if (queue.getMinioInfo().equals("")) {
-
-        } else {
-            System.out.println(queue.getMinioInfo());
-//            list = gson.fromJson(queue.getMinioInfo(), new TypeToken<List<AddTaskMinio>>() {
+//        if (queue.getMinioInfo().equals("")) {
+//
+//        } else {
+//            System.out.println(queue.getMinioInfo());
+//            list = gson.fromJson(String.valueOf(queue.getMinioInfo()), new TypeToken<List<AddTaskMinio>>() {
 //            }.getType());
-        }
+//        }
 //        System.out.println(list);
-        List<TaskManager> taskManagerList = segmentService.selectSegmentList(queue.getResolvingPower(), String.valueOf(languageInfo.getId()), queue.getDoubanId());
-
+        List<TaskManager> taskManagerList = segmentService.selectSegmentList(newResolving, String.valueOf(languageInfo.getId()), queue.getDoubanId());
+        System.out.println(taskManagerList);
+        //先判断任务是否存在
         if (taskManagerList.size() == 0) {
-
-
             if (!queue.getResolvingPower().equals("")) {
                 if (!queue.getResolvingPower().contains(",")) {
+
                     ResData oneMinio = findOneMinio(queue.getResolvingPower(), filmSize, queue, languagerId);
                     return oneMinio;
                 } else {
@@ -310,18 +374,14 @@ public class TaskController {
                         minioId = minioId + "," + list.get(i).getId();
                     }
                 }
-                ResData resData = new ResData();
-                if (queue.getResolvingPower().equals("")) {
+//                VisitUrl visitUrl = resVisitUrl(queue);
+//
+//                visitService.insertVisitUrl(visitUrl);
 
-                } else {
-                    VisitUrl visitUrl = resVisitUrl(queue);
+                ResData resData = addTaskResData(list, minioId, filmSize, queue);
 
-                    visitService.insertVisitUrl(visitUrl);
-                    resData = addTaskResData(list, minioId, filmSize, queue);
-                }
                 return resData;
             }
-
         } else {
             res.setCode(3);
             res.setMsg("任务已存在");
@@ -330,7 +390,7 @@ public class TaskController {
         }
     }
     /**
-     * 封装返回消息
+     * 封装返回消息 , 将传入数据放入 调用该方法
      */
     public ResData addTaskResData(List<AddTaskMinio> list,String minioId,double filmSize,AddSegmentQueue queue){
         if (list.size() == 1){
@@ -362,17 +422,31 @@ public class TaskController {
 
             segmentService.insertSegment(taskManager);
 
+            VisitUrl visitUrl1 = visitService.selectByDouBanId(queue.getDoubanId());
+            if (visitUrl1 == null){
+                VisitUrl visitUrl = resVisitUrl(queue);
+
+                visitService.insertVisitUrl(visitUrl);
+            }else {
+                if (visitUrl1.getLanguage().equals(queue.getLanguage())){
+
+                }else {
+                    visitUrl1.setLanguage(visitUrl1+","+queue.getLanguage());
+                    visitService.updateByDouBanId(queue.getDoubanId(),visitUrl1);
+                }
+            }
+
             resData.setCode(0);
             resData.setMsg("success");
             resData.setData("");
+
             return resData;
         }else {
-            resData.setCode(6);
-            resData.setMsg("返回容量不够的存储桶Id,其他分辨率继续执行");
+            resData.setCode(1);
+            resData.setMsg("返回容量不够的存储桶Id");
             resData.setData(minio.getId());
             return resData;
         }
-
     }
 
     /**
@@ -414,14 +488,40 @@ public class TaskController {
                 }
             }
         }
-
         TaskManager taskManager = resTaskManger(successMinioId, successResolvingPower, queue, languageInfo.getId(), String.valueOf(filmSize));
+        if (taskManager.getResolvingPower().equals("")){
 
+        }else {
+            VisitUrl visitUrl1 = visitService.selectByDouBanId(queue.getDoubanId());
+            if (visitUrl1 == null){
+                VisitUrl visitUrl = resVisitUrl(queue);
+
+                visitService.insertVisitUrl(visitUrl);
+            }else {
+                if (visitUrl1.getLanguage().equals(queue.getLanguage())){
+
+                }else {
+                    visitUrl1.setLanguage(visitUrl1+","+queue.getLanguage());
+                    visitService.updateByDouBanId(queue.getDoubanId(),visitUrl1);
+                }
+            }
+
+        }
         segmentService.insertSegment(taskManager);
+        if (successResolvingPower.equals(queue.getResolvingPower())){
+            resData.setCode(0);
+            resData.setMsg("success");
+            resData.setData("");
+        }else if (successResolvingPower.equals("")){
+            resData.setCode(4);
+            resData.setMsg("error");
+            resData.setData("");
+        }else {
+            resData.setCode(5);
+            resData.setMsg("返回容量不够的存储桶Id,其他分辨率继续执行");
+            resData.setData(newMinioId);
+        }
 
-        resData.setCode(6);
-        resData.setMsg("返回容量不够的存储桶Id,其他分辨率继续执行");
-        resData.setData(newMinioId);
         return resData;
     }
     /**
@@ -446,6 +546,7 @@ public class TaskController {
         taskManager.setFilmSize(filmSize);
         taskManager.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
         taskManager.setDeleteFlag("0");
+        taskManager.setFilmRandom(queue.getFilmRandom());
         return taskManager;
     }
     public VisitUrl resVisitUrl(AddSegmentQueue queue){
@@ -453,8 +554,8 @@ public class TaskController {
         VisitUrl visitUrl = new VisitUrl();
         visitUrl.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
         visitUrl.setMinioUrl("");
-        visitUrl.setNginxUrl("");
-        visitUrl.setCdnUrl("");
+//        visitUrl.setNginxUrl("");
+//        visitUrl.setCdnUrl("");
         visitUrl.setDoubanId(queue.getDoubanId());
 
         return visitUrl;
@@ -489,9 +590,19 @@ public class TaskController {
             resData.setMsg("该清晰度没有对应的存储桶可以进行存储");
             resData.setData(resolving);
         } else {
-            VisitUrl visitUrl = resVisitUrl(queue);
+            VisitUrl visitUrl1 = visitService.selectByDouBanId(queue.getDoubanId());
+            if (visitUrl1 == null){
+                VisitUrl visitUrl = resVisitUrl(queue);
 
-            visitService.insertVisitUrl(visitUrl);
+                visitService.insertVisitUrl(visitUrl);
+            }else {
+                if (visitUrl1.getLanguage().equals(queue.getLanguage())){
+
+                }else {
+                    visitUrl1.setLanguage(visitUrl1+","+queue.getLanguage());
+                    visitService.updateByDouBanId(queue.getDoubanId(),visitUrl1);
+                }
+            }
             segmentService.insertSegment(taskManager);
             resData.setCode(0);
             resData.setMsg("success");
@@ -500,6 +611,15 @@ public class TaskController {
         return resData;
 
     }
+
+    /**
+     * 传多个清晰度
+     * @param resolving
+     * @param queue
+     * @param filmSize
+     * @param languageId
+     * @return
+     */
     private ResData findMoreMinio(String resolving,AddSegmentQueue queue,double filmSize,Integer languageId) {
         ResData resData = new ResData();
         String[] split = resolving.split(",");
@@ -508,6 +628,7 @@ public class TaskController {
         String minioId = "";
         String successResolving = "";
         String failResolving = "";
+        String failMinioId = "";
         for (int i = 0; i < split.length; i++) {
             List<MinioInfo> minioByResolvingPower = minioInfoService.findMinioByResolvingPower(split[i]);
 
@@ -539,6 +660,11 @@ public class TaskController {
                             failResolving = failResolving + "," + split[i];
                         }
                     }
+                    if (failMinioId.equals("")){
+                        failMinioId = String.valueOf(minioByResolvingPower.get(i).getId());
+                    }else {
+                        failMinioId = failMinioId + minioByResolvingPower.get(i).getId();
+                    }
                 }
             }
 
@@ -548,17 +674,33 @@ public class TaskController {
         }
         if (minioId.equals("")){
             resData.setCode(1);
-            resData.setMsg("没有一个存储桶可以进行添加");
+            resData.setMsg("error");
             resData.setData("");
         }else {
-            VisitUrl visitUrl = resVisitUrl(queue);
+            VisitUrl visitUrl1 = visitService.selectByDouBanId(queue.getDoubanId());
+            if (visitUrl1 == null){
+                VisitUrl visitUrl = resVisitUrl(queue);
 
-            visitService.insertVisitUrl(visitUrl);
+                visitService.insertVisitUrl(visitUrl);
+            }else {
+                if (visitUrl1.getLanguage().equals(queue.getLanguage())){
+
+                }else {
+                    visitUrl1.setLanguage(visitUrl1+","+queue.getLanguage());
+                    visitService.updateByDouBanId(queue.getDoubanId(),visitUrl1);
+                }
+            }
             TaskManager taskManager = resTaskManger(minioId, successResolving, queue, languageId, String.valueOf(filmSize));
             segmentService.insertSegment(taskManager);
-            resData.setCode(6);
-            resData.setMsg("返回失败的清晰度，其他任务继续执行");
-            resData.setData(failResolving);
+            if (failResolving.equals("")){
+                resData.setCode(0);
+                resData.setMsg("success");
+                resData.setData("");
+            }else if (!successResolving.equals("") && !failResolving.equals("")){
+                resData.setCode(6);
+                resData.setMsg("返回失败的清晰度存储桶，其他任务继续执行");
+                resData.setData(failMinioId);
+            }
         }
 //        if (){
 //

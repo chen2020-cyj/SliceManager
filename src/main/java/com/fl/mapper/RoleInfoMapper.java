@@ -1,9 +1,9 @@
 package com.fl.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.fl.entity.Rule;
+import com.fl.entity.RoleInfo;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface RuleUserInfoMapper extends BaseMapper<Rule> {
+public interface RoleInfoMapper extends BaseMapper<RoleInfo> {
 }

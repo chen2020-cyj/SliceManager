@@ -11,7 +11,7 @@ public class OperationLog {
     @TableId(type = IdType.AUTO)
     private Integer id;
 
-    private Integer userId;
+    private Object userId;
 
     private String msg;
 

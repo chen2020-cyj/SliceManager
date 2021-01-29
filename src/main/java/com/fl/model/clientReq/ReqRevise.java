@@ -7,7 +7,7 @@ public class ReqRevise {
 //    private String token;
 //
 //    private Integer userId;
-    private String username;
+    private Integer id;
 
     private String password;
 }
