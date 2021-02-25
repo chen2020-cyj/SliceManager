@@ -598,28 +598,39 @@ public class RuleController {
         RoleInfo roleInfo = new RoleInfo();
 
         roleInfo.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
-//        roleInfo.setMenuId("");
-        roleInfo.setName(reqAddRoleInfo.getRoleName());
-        roleInfo.setPid(reqAddRoleInfo.getPid());
-        roleInfoService.save(roleInfo);
 
-        String[] split = reqAddRoleInfo.getGroupId().split(",");
-        for (int i = 0; i < split.length; i++) {
-            SysRoleRefRoute sysRoleRefRoute = new SysRoleRefRoute();
+        if (reqAddRoleInfo.getGroupId().contains(",")){
+            roleInfo.setName(reqAddRoleInfo.getRoleName());
+            roleInfo.setPid(reqAddRoleInfo.getPid());
+            roleInfoService.save(roleInfo);
 
-            sysRoleRefRoute.setRoleInfoId(roleInfo.getId());
-            sysRoleRefRoute.setMenuId(Integer.valueOf(split[i]));
+            String[] split = reqAddRoleInfo.getGroupId().split(",");
+            for (int i = 0; i < split.length; i++) {
+                SysRoleRefRoute sysRoleRefRoute = new SysRoleRefRoute();
 
-            list.add(sysRoleRefRoute);
+                sysRoleRefRoute.setRoleInfoId(roleInfo.getId());
+                sysRoleRefRoute.setMenuId(Integer.valueOf(split[i]));
+
+                list.add(sysRoleRefRoute);
+            }
+
+            sysRoleRefRouteService.saveBatch(list);
+
+            resData.setCode(0);
+            resData.setMsg("success");
+            resData.setData("");
+
+            return resData;
+        }else {
+            resData.setCode(400);
+            resData.setMsg("权限添加错误");
+            resData.setData("");
+
+            return resData;
         }
 
-        sysRoleRefRouteService.saveBatch(list);
+//        roleInfo.setMenuId("");
 
-        resData.setCode(0);
-        resData.setMsg("success");
-        resData.setData("");
-
-        return resData;
     }
     @PreAuthorize("@zz.check('admin:updateRolePower')")
     @Log("admin:updateRolePower")
@@ -773,8 +784,8 @@ public class RuleController {
                     userInfo.setRoleName(roleInfo1.getName());
                 }
 
-                userInfo.setCreateTime(list.get(i).getCreateTime());
-                userInfo.setUpdateTime(list.get(i).getUpdateTime());
+                userInfo.setCreateTime(userList.get(i).getCreateTime());
+                userInfo.setUpdateTime(userList.get(i).getUpdateTime());
 
                 userInfoList.add(userInfo);
             }
@@ -793,6 +804,7 @@ public class RuleController {
                             userInfo.setUsername(userList.get(j).getUsername());
                             userInfo.setName(userList.get(j).getName());
                             RoleInfo roleInfo1 = roleInfoService.selectById(userList.get(j).getRoleId());
+
                             userInfo.setRoleName(roleInfo1.getName());
                             userInfo.setCreateTime(userList.get(j).getCreateTime());
                             userInfo.setUpdateTime(userList.get(j).getUpdateTime());
@@ -826,6 +838,7 @@ public class RuleController {
                         userInfo.setName(userList.get(j).getName());
                         userInfo.setUsername(userList.get(j).getUsername());
                         RoleInfo roleInfo1 = roleInfoService.selectById(userList.get(j).getRoleId());
+
                         userInfo.setRoleName(roleInfo1.getName());
                         userInfo.setCreateTime(userList.get(j).getCreateTime());
                         userInfo.setUpdateTime(userList.get(j).getUpdateTime());

@@ -22,7 +22,7 @@ import java.lang.reflect.Method;
 
 @Aspect
 @Component
-public class LogAspect {
+public class  LogAspect {
 
     @Autowired
     private OperationLogService operationLogService;
@@ -152,7 +152,17 @@ public class LogAspect {
             case "addRoleInfo":
                 insert(userId,"添加角色组"+param);
                 break;
+            case "uploadSubtitle":
 
+                String substring = param.substring(param.indexOf("subtitleInfo"), param.indexOf("subtitleName"));
+
+                String subtitleInfo = param.replace(substring, "");
+
+                insert(userId,"上传字幕文件"+subtitleInfo);
+                break;
+            case "delSubtitleInfo":
+                insert(userId,"删除字幕文件"+param);
+                break;
         }
     }
 

@@ -27,18 +27,18 @@ public class VisitService extends ServiceImpl<VisitUrlMapper, VisitUrl> {
     /**
      * 根据doubanId查找数据
      */
-    public VisitUrl selectByDouBanId(String filmId){
+    public VisitUrl selectByFilmRandom(String filmRandom){
         QueryWrapper<VisitUrl> wrapper = new QueryWrapper<>();
-        wrapper.eq("douban_id",filmId);
+        wrapper.eq("film_random",filmRandom);
 
         return visitUrlMapper.selectOne(wrapper);
     }
     /**
      * 根据filmId  更新数据
      */
-    public void updateByDouBanId(String doubanId,VisitUrl visitUrl){
+    public void updateByFilmRandom(String filmRandom,VisitUrl visitUrl){
         QueryWrapper<VisitUrl> wrapper = new QueryWrapper<>();
-        wrapper.eq("douban_id",doubanId);
+        wrapper.eq("film_random",filmRandom);
 
         visitUrlMapper.update(visitUrl,wrapper);
     }

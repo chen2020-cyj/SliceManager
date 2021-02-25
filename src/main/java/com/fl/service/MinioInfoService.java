@@ -93,4 +93,10 @@ public class MinioInfoService extends ServiceImpl<MinioInfoMapper, MinioInfo> {
         wrapper.eq("''","");
         return  minioInfoMapper.selectList(wrapper);
     }
+    public List<MinioInfo> selectByType(String type){
+        QueryWrapper<MinioInfo> wrapper = new QueryWrapper<>();
+        wrapper.ne("usage_status","1").and(i->i.eq("type",type));
+
+        return minioInfoMapper.selectList(wrapper);
+    }
 }

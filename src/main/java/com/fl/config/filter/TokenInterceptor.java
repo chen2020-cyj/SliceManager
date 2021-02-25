@@ -67,6 +67,12 @@ public class TokenInterceptor extends GenericFilterBean {
         }else if (uri.equals("/signOut")){
             filterChain.doFilter(servletRequest,servletResponse);
             return;
+        }else if (uri.equals("/subtitleDownload")){
+            filterChain.doFilter(servletRequest,servletResponse);
+            return;
+        }else if (uri.equals("/subtitleUpload")){
+            filterChain.doFilter(servletRequest,servletResponse);
+            return;
         }
 
         if (token != null){

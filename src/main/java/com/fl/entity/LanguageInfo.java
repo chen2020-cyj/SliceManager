@@ -16,6 +16,8 @@ public class LanguageInfo {
      */
     private String language;
 
+    private String languageKey;
+
     private String createTime;
 
     private String updateTime;

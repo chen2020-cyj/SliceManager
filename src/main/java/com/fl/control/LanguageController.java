@@ -47,6 +47,7 @@ public class LanguageController {
             LanguageInfo languageInfo1 = new LanguageInfo();
             languageInfo1.setLanguage(reqAddLanguage.getLanguage());
             languageInfo1.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
+            languageInfo1.setLanguageKey(reqAddLanguage.getOtherName());
             languageInfoService.insertLanguage(languageInfo1);
 
             res.setCode(0);

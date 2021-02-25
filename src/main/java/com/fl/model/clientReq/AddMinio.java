@@ -17,6 +17,8 @@ public class AddMinio {
 
     private double availableCapacity;
 
+    private String type;
+
     private String area;
 
     private List<AddServerInfo> data;

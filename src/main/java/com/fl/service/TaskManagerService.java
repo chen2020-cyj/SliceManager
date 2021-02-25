@@ -45,7 +45,7 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
      */
     public List<TaskManager> selectAllSegment(){
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("''","").and(i->i.eq("delete_flag","0"));
+        wrapper.eq("''","").and(i->i.ne("delete_flag","1"));
 
         return taskManagerMapper.selectList(wrapper);
     }
@@ -63,10 +63,10 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
      * @param
      * @return
      */
-    public List<TaskManager> selectSegmentList(String resolvingPower,String languageId,String doubanId){
+    public List<TaskManager> selectSegmentList(String resolvingPower,String filmRandom){
 
         QueryWrapper<TaskManager> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("douban_id",doubanId).and(Wrapper->Wrapper.eq("resolving_power",resolvingPower)).and(Wrapper->Wrapper.eq("language_id",languageId)).and(Wrapper->Wrapper.ne("delete_flag","1"));
+        queryWrapper.eq("film_random",filmRandom).and(Wrapper->Wrapper.eq("resolving_power",resolvingPower)).and(Wrapper->Wrapper.ne("delete_flag","1"));
         return taskManagerMapper.selectList(queryWrapper);
     }
 
@@ -136,8 +136,6 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
         TaskManager taskManager = taskManagerMapper.selectOne(wrapper);
         if (taskManager.getLinkState().equals("")){
             taskManager.setLinkState(state);
-        }else {
-            taskManager.setLinkState(taskManager.getLinkState()+","+state);
         }
         taskManagerMapper.update(taskManager,wrapper);
     }
@@ -170,7 +168,7 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
     public TaskManager selectByFilmId(String filmId){
 
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("film_id",filmId);
+        wrapper.eq("film_id",filmId).and(i->i.ne("delete_flag","1"));
 
         return taskManagerMapper.selectOne(wrapper);
     }
@@ -200,11 +198,11 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
             taskManagerMapper.update(taskManager,wrapper);
             return "success";
         }else if (btUrl.equals("") && !subtitleUrl.equals("")){
-            taskManager.setSubtitleUrl(subtitleUrl);
+//            taskManager.setSubtitleUrl(subtitleUrl);
             taskManagerMapper.update(taskManager,wrapper);
             return "success";
         }else if (!btUrl.equals("") && !subtitleUrl.equals("")){
-            taskManager.setSubtitleUrl(subtitleUrl);
+//            taskManager.setSubtitleUrl(subtitleUrl);
             taskManager.setBtUrl(btUrl);
             taskManagerMapper.update(taskManager,wrapper);
             return "success";
@@ -246,9 +244,10 @@ public class TaskManagerService extends ServiceImpl<TaskManagerMapper, TaskManag
     /**
      * 根据语言  还有 豆瓣Id进行查找
      */
-    public List<TaskManager> selectByLanDbId(Integer languageId,String doubanId){
+    public List<TaskManager> selectByFilmRandom(String filmRandom){
         QueryWrapper<TaskManager> wrapper = new QueryWrapper<>();
-        wrapper.eq("language_id",languageId).and(i->i.eq("douban_id",doubanId));
+
+        wrapper.eq("film_random",filmRandom);
 
         return taskManagerMapper.selectList(wrapper);
     }

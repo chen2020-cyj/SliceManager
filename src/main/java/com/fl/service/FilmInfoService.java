@@ -35,39 +35,6 @@ public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
         return filmInfoMapper.selectPage(infoIPage, queryWrapper);
     }
 
-    /**
-     * 查询所有个数
-     */
-    public Integer selectCount() {
-        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
-        wrapper.eq("''", "");
-
-        return filmInfoMapper.selectCount(wrapper);
-    }
-
-    /**
-     * 根据电影名称进行查询
-     */
-    public IPage<FilmInfo> selectByFilmName(String filmName) {
-        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
-        wrapper.like("chinese_name", filmName);
-        IPage<FilmInfo> infoIPage = new Page<>(0, 1);
-
-        return filmInfoMapper.selectPage(infoIPage,wrapper);
-    }
-
-    /**
-     *
-     * @param map
-     * @return
-     */
-
-    public FilmInfo selectByNameAndLanguage(Map<String, String> map) {
-        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
-        wrapper.allEq(map);
-
-        return filmInfoMapper.selectOne(wrapper);
-    }
     public IPage<FilmInfo> selectByDouBanId(String doubanId){
         QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
         wrapper.eq("douban_id",doubanId);
@@ -84,16 +51,6 @@ public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
         return filmInfoMapper.selectOne(wrapper);
     }
 
-    /**
-     * 根据地区查询数据
-     */
-    public IPage<FilmInfo> selectByArea(String area, Integer page, Integer offset) {
-        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
-        wrapper.like("production_country", area);
-        IPage<FilmInfo> infoIPage = new Page<>(page, offset);
-
-        return filmInfoMapper.selectPage(infoIPage, wrapper);
-    }
 
     /**
      * 根据年份进行查询
@@ -301,18 +258,6 @@ public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
         return resFilmInfoMapper;
     }
 
-
-    public List<FilmInfo> allFilmInfo(){
-        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
-        wrapper.eq("''","");
-
-        return filmInfoMapper.selectList(wrapper);
-    }
-    public void updateInfo(FilmInfo filmInfo){
-//        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
-
-        filmInfoMapper.updateById(filmInfo);
-    }
     public List<FilmInfo> selectByLikeName(String filmName,String categoryId){
         QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
         wrapper.like("chinese_name",filmName).and(i->i.eq("category",categoryId));
@@ -325,19 +270,21 @@ public class FilmInfoService extends ServiceImpl<FilmInfoMapper, FilmInfo> {
 
         return filmInfoMapper.selectCount(wrapper);
     }
-    public List<FilmInfo> selectAllList(){
-        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
-        wrapper.eq("''","");
-
-        return filmInfoMapper.selectList(wrapper);
-    }
-
-    public void updateFilmInfo(FilmInfo filmInfo){
-        filmInfoMapper.updateById(filmInfo);
-    }
     public FilmInfo selectByFilmId(String filmId){
         QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
         wrapper.eq("film_id",filmId);
+
+        return filmInfoMapper.selectOne(wrapper);
+    }
+    public List<FilmInfo> All(){
+        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("film_id","");
+
+        return filmInfoMapper.selectList(wrapper);
+    }
+    public FilmInfo selectByFilmRandom(String filmRandom){
+        QueryWrapper<FilmInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("film_random",filmRandom);
 
         return filmInfoMapper.selectOne(wrapper);
     }

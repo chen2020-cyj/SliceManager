@@ -7,9 +7,8 @@ import com.fl.entity.*;
 import com.fl.kafka.data.KafkaMessage;
 import com.fl.kafka.data.KafkaTitles;
 import com.fl.kafka.producer.KafkaProducer;
-import com.fl.model.FilmInfoData;
-import com.fl.model.ResFilmInfoMapper;
-import com.fl.model.UploadUrl;
+import com.fl.model.*;
+
 import com.fl.model.clientReq.*;
 import com.fl.model.clientRes.*;
 import com.fl.service.*;
@@ -48,6 +47,8 @@ public class FilmInfoController {
     private SearchService searchService;
     @Autowired
     private MinioInfoService minioInfoService;
+    @Autowired
+    private SubtitleTaskService subtitleTaskService;
 
     private ResFilmData resFilmData = new ResFilmData();
     private ResData res = new ResData();
@@ -58,7 +59,6 @@ public class FilmInfoController {
     @ApiOperation("查询所有影片信息")
     @PostMapping(value = "/selectFilm", produces = "application/json;charset=UTF-8")
     public ResFilmData selectFilm(@RequestBody FindAllFilmInfo findAllFilmInfo) {
-
 
         FilmInfoData filmInfoData = new FilmInfoData();
 //        ResFilmInfoSource
@@ -86,6 +86,31 @@ public class FilmInfoController {
                 for (int i = 0; i < filmList.size(); i++) {
                     ResFilmInfoSource resFilmInfoSource = new ResFilmInfoSource();
 
+                    List<ResSubtitleInfo> resSubtitleInfos = new ArrayList<>();
+
+                    List<SubtitleTask> subtitleTasks = subtitleTaskService.selectByFilmRandom(filmList.get(i).getFilmId());
+                    if (subtitleTasks.size() == 0){
+                        resFilmInfoSource.setSubtitleInfo(null);
+                    }else {
+                        for (int j = 0; j < subtitleTasks.size(); j++) {
+                            ResSubtitleInfo resSubtitleInfo = new ResSubtitleInfo();
+                            resSubtitleInfo.setCreateTime(subtitleTasks.get(j).getCreateTime());
+                            resSubtitleInfo.setFilmName(filmList.get(i).getChineseName());
+                            resSubtitleInfo.setFilmRandom(subtitleTasks.get(j).getFilmRandom());
+
+                            LanguageInfo languageInfo = languageInfoService.selectById(subtitleTasks.get(j).getLanguageId());
+
+                            resSubtitleInfo.setLanguage(languageInfo.getLanguage());
+                            resSubtitleInfo.setSubtitleName(subtitleTasks.get(j).getSubtitleName());
+                            resSubtitleInfo.setSubtitleSuffix(subtitleTasks.get(j).getSubtitleSuffix());
+                            resSubtitleInfo.setUpdateTime(subtitleTasks.get(j).getUpdateTime());
+                            resSubtitleInfo.setDownloadState(subtitleTasks.get(j).getDownloadState());
+
+                            resSubtitleInfos.add(resSubtitleInfo);
+                        }
+                        resFilmInfoSource.setSubtitleInfo(resSubtitleInfos);
+                    }
+
                     List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectByFilmInfoId(filmList.get(i).getId());
                     if (filmSourceRecords.size() > 0){
 
@@ -96,10 +121,46 @@ public class FilmInfoController {
 
 
                             VisitUrl visitUrl = visitService.selectById(Integer.valueOf(filmSourceRecords.get(j).getVisitUrlId()));
-
+                            System.out.println(visitUrl.getMinioUrl());
                             List<UploadUrl> uploadList = gson.fromJson(String.valueOf(visitUrl.getMinioUrl()),new TypeToken<List<UploadUrl>>(){}.getType());
 
-                            resFilmSource.setMinioUrl(uploadList);
+                            Map<String,String> mapUploadUrl = new HashMap<>();
+
+                            List<SubtitleInfo> subtitleUrl = new ArrayList<>();
+
+                            for (int k = 0; k < uploadList.size(); k++) {
+                                mapUploadUrl.put(uploadList.get(k).getResolving(),uploadList.get(k).getUrl());
+                            }
+                            Map<Integer,Map<String,String>> mapId = new HashMap<>();
+                            List<IncludeSubtitle> subtitleList = new ArrayList<>();
+
+                            if (visitUrl.getSubtitleUrl().equals("")){
+
+                                resFilmSource.setSubtitleUrl("");
+
+                            }else {
+                                subtitleUrl = gson.fromJson(visitUrl.getSubtitleUrl(),new TypeToken<List<SubtitleInfo>>(){}.getType());
+                                System.out.println(subtitleUrl);
+                                for (int k = 0; k < subtitleUrl.size(); k++) {
+                                    IncludeSubtitle includeSubtitle = new IncludeSubtitle();
+//                                    Map<String,String> mapSubtitle = new HashMap<>();
+                                    LanguageInfo languageInfo = languageInfoService.selectByLanguage(subtitleUrl.get(k).getLanguage());
+                                    SubtitleTask subtitleTask = subtitleTaskService.selectByFilmRandom(visitUrl.getFilmRandom(), languageInfo.getId());
+                                    includeSubtitle.setId(subtitleTask.getId());
+                                    includeSubtitle.setLanguage(languageInfo.getLanguage());
+                                    includeSubtitle.setUrl(subtitleUrl.get(k).getUrl());
+                                    subtitleList.add(includeSubtitle);
+//                                    if (languageInfo.getLanguage().equals(subtitleUrl.get(k).getLanguage())){
+//                                        mapSubtitle.put(subtitleUrl.get(k).getLanguage(),subtitleUrl.get(k).getUrl());
+
+//                                        mapId.put(subtitleTask.getId(),mapSubtitle);
+//                                    }
+                                }
+                                resFilmSource.setSubtitleUrl(subtitleList);
+
+                            }
+                            resFilmSource.setMinioUrl(mapUploadUrl);
+
 
                             resFilmSourceList.add(resFilmSource);
                             resFilmInfoSource.setFilmInfo(filmList.get(i));
@@ -112,6 +173,7 @@ public class FilmInfoController {
                         list.add(resFilmInfoSource);
                     }
                 }
+
                 filmInfoData.setList(list);
                 filmInfoData.setMinioInfoList(minioInfoList);
                 resFilmData.setCode(0);
@@ -145,6 +207,32 @@ public class FilmInfoController {
                 for (int i = 0; i < listFilmInfo.size(); i++) {
                     ResFilmInfoSource resFilmInfoSource = new ResFilmInfoSource();
 
+                    List<SubtitleTask> subtitleTasks = subtitleTaskService.selectByFilmRandom(listFilmInfo.get(i).getFilmId());
+
+                    List<ResSubtitleInfo> infoList = new ArrayList<>();
+
+                    if (subtitleTasks.size() == 0){
+                        resFilmInfoSource.setSubtitleInfo(null);
+                    }else {
+                        for (int j = 0; j < subtitleTasks.size(); j++) {
+                            ResSubtitleInfo resSubtitleInfo = new ResSubtitleInfo();
+                            resSubtitleInfo.setSubtitleSuffix(subtitleTasks.get(j).getSubtitleSuffix());
+                            resSubtitleInfo.setSubtitleName(subtitleTasks.get(j).getSubtitleName());
+
+                            LanguageInfo languageInfo = languageInfoService.selectById(subtitleTasks.get(j).getLanguageId());
+
+                            resSubtitleInfo.setLanguage(languageInfo.getLanguage());
+                            resSubtitleInfo.setFilmRandom(subtitleTasks.get(j).getFilmRandom());
+                            resSubtitleInfo.setFilmName(listFilmInfo.get(i).getChineseName());
+                            resSubtitleInfo.setCreateTime(subtitleTasks.get(j).getCreateTime());
+                            resSubtitleInfo.setUpdateTime(subtitleTasks.get(j).getUpdateTime());
+                            resSubtitleInfo.setDownloadState(subtitleTasks.get(j).getDownloadState());
+
+                            infoList.add(resSubtitleInfo);
+                        }
+                        resFilmInfoSource.setSubtitleInfo(infoList);
+                    }
+
                     List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectByFilmInfoId(listFilmInfo.get(i).getId());
                     if (filmSourceRecords.size() > 0) {
 //                        LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(filmSourceRecords.get(0).getLanguageId()));
@@ -153,13 +241,41 @@ public class FilmInfoController {
                         for (int j = 0; j < filmSourceRecords.size(); j++) {
                             resFilmSource = resSource(filmSourceRecords.get(j));
 
-
                             VisitUrl visitUrl = visitService.selectById(Integer.valueOf(filmSourceRecords.get(j).getVisitUrlId()));
-
+                            Map<String,String> mapUploadUrl = new HashMap<>();
                             List<UploadUrl> uploadList = gson.fromJson(String.valueOf(visitUrl.getMinioUrl()),new TypeToken<List<UploadUrl>>(){}.getType());
 
-                            resFilmSource.setMinioUrl(uploadList);
+                            for (int k = 0; k < uploadList.size(); k++) {
+                                mapUploadUrl.put(uploadList.get(k).getResolving(),uploadList.get(k).getUrl());
+                            }
+                            List<SubtitleInfo> subtitleUrl = new ArrayList<>();
+//                            Map<Integer,Map<String,String>> mapId = new HashMap<>();
 
+                            List<IncludeSubtitle> subtitleList = new ArrayList<>();
+                            if (visitUrl.getSubtitleUrl().equals("")){
+                                resFilmSource.setSubtitleUrl("");
+                            }else {
+                                subtitleUrl = gson.fromJson(visitUrl.getSubtitleUrl(),new TypeToken<List<SubtitleInfo>>(){}.getType());
+                                for (int k = 0; k < subtitleUrl.size(); k++) {
+
+                                    IncludeSubtitle includeSubtitle = new IncludeSubtitle();
+
+
+//                                    Map<String,String> mapSubtitleUrl = new HashMap<>();
+                                    LanguageInfo languageInfo = languageInfoService.selectByLanguage(subtitleUrl.get(k).getLanguage());
+                                    SubtitleTask subtitleTask = subtitleTaskService.selectByFilmRandom(visitUrl.getFilmRandom(), languageInfo.getId());
+//                                    if (subtitleUrl.get(k).equals(languageInfo.getLanguage())){
+                                    includeSubtitle.setId(subtitleTask.getId());
+                                    includeSubtitle.setLanguage(languageInfo.getLanguage());
+                                    includeSubtitle.setUrl(subtitleUrl.get(k).getUrl());
+//                                        mapSubtitleUrl.put(subtitleUrl.get(k).getLanguage(),subtitleUrl.get(k).getUrl());
+//                                        mapId.put(subtitleTask.getId(),mapSubtitleUrl);
+//                                    }
+                                    subtitleList.add(includeSubtitle);
+                                }
+                                resFilmSource.setSubtitleUrl(subtitleList);
+                            }
+                            resFilmSource.setMinioUrl(mapUploadUrl);
                             resFilmSourceList.add(resFilmSource);
                         }
 
@@ -253,13 +369,13 @@ public class FilmInfoController {
 
         return resFilmSource;
     }
-//    public
+
     @PreAuthorize("@zz.check('user:updateFilm')")
     @Log("user:updateFilmInfo")
     @ApiOperation("修改电影信息")
     @PostMapping(value = "/updateFilmInfo", produces = "application/json;charset=UTF-8")
     public ResFilmData updateFilmInfo(@RequestBody UpdateInfo updateInfo) {
-//        System.out.println("afafaaf");
+
         FilmInfo filmInfo = filmInfoService.selectById(updateInfo.getFilmInfoId());
         System.out.println("更新数据:"+updateInfo);
         filmInfo.setChineseName(updateInfo.getChineseName());
@@ -323,9 +439,6 @@ public class FilmInfoController {
                 return res;
             }
         }
-
-
     }
-
 
 }

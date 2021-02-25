@@ -41,71 +41,6 @@ public class FilmSourceController {
     private ResFindAllFilmSource resFindAllFilmSource = new ResFindAllFilmSource();
     private ResFilmData resFilmData = new ResFilmData();
 
-//    @ApiOperation("查询片源")
-//    @PostMapping(value = "/selectFilm",produces = "application/json;charset=UTF-8")
-//    public String selectFilm(@RequestBody FindFilmSource filmSource){
-//
-//        FilmSourceRecord film = filmSourceService.findFilm(filmSource.getFilmId());
-//
-//        if (film != null){
-//
-////            filmInfo.setFilmId(film.getFilmId());
-////            filmInfo.setMinioUrl(GsonUtils.toJson(film.getMinioUrl()));
-////            filmInfo.setResolvingPower(film.getResolvingPower());
-//
-//            resFilmData.setCode(0);
-//            resFilmData.setMsg("success");
-//            resFilmData.setData(filmInfo);
-//            resFilmData.setTotal(1);
-//
-//            return GsonUtils.toJson(resFilmData);
-//        }else {
-//            res.setCode(1);
-//            res.setMsg("err");
-//            res.setData("");
-//
-//            return GsonUtils.toJson(res);
-//        }
-//    }
-
-//    @ApiOperation("管理员查看单个片源")
-//    @PostMapping(value = "/adminSelectFilm",produces = "application/json;charset=UTF-8")
-//    public ResFilmData selectFilm(@RequestBody AdminFindFilm admin) {
-//
-//        FilmSourceRecord film = filmSourceService.findFilm(admin.getFilmId());
-////        User user = userService.selectUserInfo(admin.getUserId());
-////        Long currentTime = System.currentTimeMillis() / 1000;
-////        Long tokenTime = Long.valueOf(user.getTokenTime());
-//
-//
-//            if (film != null) {
-//
-//                LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(film.getLanguageId()));
-//                VisitUrl visitUrl = visitService.selectByFilmId(film.getFilmId());
-//
-//                ResFilmSource resFilmSource = filmSource(film);
-//                resFilmSource.setLanguage(languageInfo.getLanguage());
-//                List<UploadUrl> list = gson.fromJson(visitUrl.getMinioUrl().toString(), new TypeToken<List<UploadUrl>>() {
-//                }.getType());
-//
-//                resFilmSource.setMinioUrl(list);
-//                resFilmSource.setMinioUrl(visitUrl.getMinioUrl());
-//
-//                resFilmData.setCode(0);
-//                resFilmData.setMsg("success");
-//                resFilmData.setData(resFilmSource);
-//                resFilmData.setTotal(1);
-//
-//                return resFilmData;
-//            } else {
-//                resFilmData.setCode(1);
-//                resFilmData.setMsg("err");
-//                resFilmData.setData("");
-//
-//                return resFilmData;
-//            }
-//
-//    }
     @Log("user:selectAllFilm")
     @ApiOperation("管理员查询所有片源")
     @PostMapping(value = "/selectAllFilm",produces = "application/json;charset=UTF-8")
@@ -197,32 +132,5 @@ public class FilmSourceController {
         return resFilmSource;
     }
 
-
-//    @ApiOperation("根据电影信息id查找片源信息")
-//    @PostMapping(value = "/selectByFilmInfoId", produces = "application/json;charset=UTF-8")
-//    public ResFilmData selectByFilmInfoId(@RequestBody FindFilmInfoById findFilmInfoById) {
-//
-//        FilmSourceRecord filmSourceRecord = filmSourceService.selectByFilmInfoId(findFilmInfoById.getFilmInfoId());
-//
-//        LanguageInfo languageInfo = languageInfoService.selectById(Integer.valueOf(filmSourceRecord.getLanguageId()));
-//
-//        VisitUrl visitUrl = visitService.selectByFilmId(filmSourceRecord.getFilmId());
-//
-//        String minioUrl = visitUrl.getMinioUrl();
-//        List<UploadUrl> list = gson.fromJson(minioUrl, new TypeToken<List<UploadUrl>>() {
-//        }.getType());
-////        System.out.println(languageInfo);
-//
-//        ResFilmSource resFilmSource = filmSource(filmSourceRecord);
-//        resFilmSource.setMinioUrl(list);
-//        resFilmSource.setLanguage(languageInfo.getLanguage());
-//        resFilmData.setCode(0);
-//        resFilmData.setMsg("success");
-//        resFilmData.setData(resFilmSource);
-//        resFilmData.setTotal(1);
-//
-//        return resFilmData;
-//
-//    }
 
 }

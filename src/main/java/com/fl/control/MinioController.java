@@ -23,7 +23,6 @@ import com.fl.service.SystemManagerService;
 import com.fl.service.TaskManagerService;
 import com.fl.service.UserService;
 import com.fl.utils.GsonUtils;
-import com.fl.utils.Md5Utils;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.swagger.annotations.Api;
@@ -92,6 +91,7 @@ public class MinioController {
         minioInfo.setTotalCapacity(addMinio.getTotalCapacity());
         minioInfo.setArea(addMinio.getArea());
         minioInfo.setAvailableCapacity(addMinio.getAvailableCapacity());
+        minioInfo.setType(addMinio.getType());
         minioInfo.setUsageStatus("0");
         minioInfoService.insertMinio(minioInfo);
 
@@ -283,21 +283,21 @@ public class MinioController {
     }
 
 
-    public static FormBody formBody(Integer id ,String ip){
-        Map<String,Object> map = new ConcurrentHashMap<>();
-        map.put("id",id);
-        map.put("ip",ip);
-        map.put("sign",PRIVATE_KEY);
-//        ASSICMD5 assicmd5 = new ASSICMD5();
-        String signToken = Md5Utils.getSignToken(map);
-        FormBody formBody = new FormBody.Builder()
-                .add("id", String.valueOf(id))
-                .add("ip", ip)
-                .add("timestamp",String.valueOf(System.currentTimeMillis()/1000))
-                .add("sign",signToken)
-                .build();
-        return formBody;
-    }
+//    public static FormBody formBody(Integer id ,String ip){
+//        Map<String,Object> map = new ConcurrentHashMap<>();
+//        map.put("id",id);
+//        map.put("ip",ip);
+//        map.put("sign",PRIVATE_KEY);
+////        ASSICMD5 assicmd5 = new ASSICMD5();
+//        String signToken = Md5Utils.getSignToken(map);
+//        FormBody formBody = new FormBody.Builder()
+//                .add("id", String.valueOf(id))
+//                .add("ip", ip)
+//                .add("timestamp",String.valueOf(System.currentTimeMillis()/1000))
+//                .add("sign",signToken)
+//                .build();
+//        return formBody;
+//    }
     public static String getRandomString(int length) {
         String str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
         Random random = new Random();

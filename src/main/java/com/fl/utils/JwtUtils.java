@@ -17,7 +17,7 @@ import java.util.Map;
 
 public class JwtUtils {
     //过期时间   * 1000
-    public static final long EXPIRE_TIME = 20 * 60 * 100;
+    public static final long EXPIRE_TIME = 30 * 60 * 1000;
     //私钥
     private static final String TOKEN_SECRET = "privateKey";
 

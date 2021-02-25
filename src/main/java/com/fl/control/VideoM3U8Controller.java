@@ -55,11 +55,7 @@ public class VideoM3U8Controller {
     @PostMapping(value = "/selectAllErrVideo",produces = "application/json;charset=UTF-8")
     public ResFilmData selectErrVideo(@RequestBody ReqLog reqLog){
         ResFilmData resData = new ResFilmData();
-////        System.out.println(videoM3U8ErrInfoService.test());
-////        List<VideoM3U8ErrInfo> test = videoM3U8ErrInfoService.test();
-////        System.out.println(test);
-//
-//        System.out.println(reqLog);
+
         List<VideoM3U8ErrInfo> videoM3U8ErrInfos = videoM3U8ErrInfoService.selectAll(reqLog.getPage(),reqLog.getOffset());
         List<ResErrM3U8> m3U8List = new ArrayList<>();
 
@@ -69,10 +65,10 @@ public class VideoM3U8Controller {
             UploadUrl list = gson.fromJson(videoM3U8ErrInfos.get(i).getErrInfo(),UploadUrl.class);
 //            videoM3U8ErrInfos.get(i).setErrInfo(list);
             FilmInfo filmInfo = filmInfoService.selectById(videoM3U8ErrInfos.get(i).getFilmInfoId());
-            LanguageInfo languageInfo = languageInfoService.selectById(videoM3U8ErrInfos.get(i).getLanguageId());
+//            LanguageInfo languageInfo = languageInfoService.selectById(videoM3U8ErrInfos.get(i).getLanguageId());
 //            visitService.selectById()
             resErrM3U8.setId(videoM3U8ErrInfos.get(i).getId());
-            resErrM3U8.setLanguage(languageInfo.getLanguage());
+//            resErrM3U8.setLanguage(languageInfo.getLanguage());
             resErrM3U8.setUrl(list);
             resErrM3U8.setFilmName(filmInfo.getChineseName());
             resErrM3U8.setCreateTime(videoM3U8ErrInfos.get(i).getCreateTime());
@@ -89,7 +85,7 @@ public class VideoM3U8Controller {
     public ResData announceErrInfo(@RequestBody AnnounceErrM3U8 announceErrM3U8){
         ResData resData = new ResData();
         VideoM3U8ErrInfo videoM3U8ErrInfo = new VideoM3U8ErrInfo();
-        LanguageInfo languageInfo = languageInfoService.selectByLanguage(announceErrM3U8.getLanguage());
+//        LanguageInfo languageInfo = languageInfoService.selectByLanguage(announceErrM3U8.getLanguage());
         UploadUrl uploadUrl = new UploadUrl();
 
         uploadUrl.setResolving(announceErrM3U8.getResolving());
@@ -97,7 +93,7 @@ public class VideoM3U8Controller {
 
         videoM3U8ErrInfo.setFilmInfoId(announceErrM3U8.getFilmInfoId());
         videoM3U8ErrInfo.setErrInfo(GsonUtils.toJson(uploadUrl));
-        videoM3U8ErrInfo.setLanguageId(languageInfo.getId());
+//        videoM3U8ErrInfo.setLanguageId(languageInfo.getId());
         videoM3U8ErrInfo.setCreateTime(String.valueOf(System.currentTimeMillis()/1000));
 
         videoM3U8ErrInfoService.save(videoM3U8ErrInfo);
@@ -105,6 +101,7 @@ public class VideoM3U8Controller {
         resData.setMsg("success");
         resData.setData("");
         return resData;
+
     }
 
     @PreAuthorize("@zz.check('user:delM3U8')")
@@ -128,22 +125,23 @@ public class VideoM3U8Controller {
             VideoM3U8ErrInfo videoM3U8ErrInfo = videoM3U8ErrInfoService.selectById(list.get(i));
             List<FilmSourceRecord> filmSourceRecords = filmSourceService.selectByFilmInfoId(videoM3U8ErrInfo.getFilmInfoId());
             VisitUrl visitUrl = visitService.selectById(Integer.valueOf(filmSourceRecords.get(0).getVisitUrlId()));
-            LanguageInfo languageInfo = languageInfoService.selectById(videoM3U8ErrInfo.getLanguageId());
-            Map map = GsonUtils.fromJson(visitUrl.getMinioUrl(), Map.class);
-            Map minioMap = GsonUtils.fromJson(GsonUtils.toJson(map.get(languageInfo.getLanguage())), Map.class);
+//            LanguageInfo languageInfo = languageInfoService.selectById(videoM3U8ErrInfo.getLanguageId());
 
-            map.remove(languageInfo.getLanguage());
+            Gson gson = new Gson();
+            List<UploadUrl> uploadList = gson.fromJson(visitUrl.getMinioUrl(),new TypeToken<List<UploadUrl>>(){}.getType());
             UploadUrl uploadUrl = GsonUtils.fromJson(videoM3U8ErrInfo.getErrInfo(), UploadUrl.class);
-            minioMap.remove(uploadUrl.getResolving());
-            List<TaskManager> taskManagerList = taskManagerService.selectByLanDbId(languageInfo.getId(), visitUrl.getDoubanId());
-            System.out.println(taskManagerList);
+            for (int j = 0; j < uploadList.size(); j++) {
+                if (uploadList.get(j).getResolving().equals(uploadUrl.getResolving())){
+                    uploadList.remove(j);
+                }
+            }
 
-            map.put(languageInfo.getLanguage(), minioMap);
+            List<TaskManager> taskManagerList = taskManagerService.selectByFilmRandom(visitUrl.getFilmRandom());
 
-            visitUrl.setMinioUrl(GsonUtils.toJson(map));
+            visitUrl.setMinioUrl(GsonUtils.toJson(uploadList));
             visitUrl.setUpdateTime(String.valueOf(System.currentTimeMillis() / 1000));
 
-            visitService.updateByDouBanId(visitUrl.getDoubanId(), visitUrl);
+            visitService.updateByFilmRandom(visitUrl.getFilmRandom(), visitUrl);
             String uploadStateSuccess = "";
             String segmentStateSuccess = "";
             if (uploadUrl.getResolving().equals("720")) {

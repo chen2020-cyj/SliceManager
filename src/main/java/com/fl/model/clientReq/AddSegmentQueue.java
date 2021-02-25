@@ -13,17 +13,17 @@ public class AddSegmentQueue {
 
     private String btUrl;
 
-    private String subtitleUrl;
+//    private String subtitleUrl;
 
     private String filmSize;
 
     private String resolvingPower;
 
-    private String subtitleSuffix;
+//    private String subtitleSuffix;
 
     private List<AddTaskMinio> minioInfo;
 
-    private String language;
+//    private String language;
 
     private String doubanId;
 

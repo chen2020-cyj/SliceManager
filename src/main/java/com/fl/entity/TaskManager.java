@@ -49,14 +49,7 @@ public class TaskManager {
      * 切片状态
      */
     private Object segmentState;
-    /**
-     * 字幕文件地址
-     */
-    private String subtitleUrl;
-    /**
-     * 字幕文件后缀
-     */
-    private String subtitleSuffix;
+
     /**
      * 电影大小
      */
@@ -65,18 +58,14 @@ public class TaskManager {
      * 放入到存储桶路径
      */
 //    private String minioUrl;
-    /**
-     * 对应语言表id
-     */
-    private String languageId;
+//    /**
+//     * 对应语言表id
+//     */
+//    private String languageId;
     /**
      * doubanId
      */
     private String doubanId;
-    /**
-     * 是否需要爬虫
-     */
-    private Integer whetherClimb;
     /**
      * 分辨率
      */

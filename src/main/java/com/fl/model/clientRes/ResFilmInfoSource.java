@@ -13,4 +13,5 @@ public class ResFilmInfoSource {
 
     private Object resFilmSource;
 
+    private Object subtitleInfo;
 }

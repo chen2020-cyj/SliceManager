@@ -16,7 +16,7 @@ public class ResFilmSource {
 
     private String BtUrl;
 
-    private String subtitleUrl;
+    private Object subtitleUrl;
 
 //    private String language;
 

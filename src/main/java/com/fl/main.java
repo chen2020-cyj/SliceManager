@@ -115,16 +115,90 @@ public class main {
 //        list.add(uploadUrl3);
 //
 //        System.out.println(GsonUtils.toJson(list));
-        String str = "修改管理员信息  reqUpdateAdminUser: ReqUpdateAdminUser(userId=12, name=汪汪, password=, roleId=1)  request: SecurityContextHolderAwareRequestWrapper[ org.springframework.security.web.header.HeaderWriterFilter$HeaderWriterRequest@217ed674]";
+//        String str = "[{\"resolving\":\"720\",\"url\":\"http://162.245.236.170:9000/video/s9kceby5/s9kceby5-321001.m3u8\"},{\"resolving\":\"480\",\"url\":\"http://162.245.236.170:9000/video/s9kceby5/s9kceby5-321001.m3u8\"},{\"resolving\":\"320\",\"url\":\"http://162.245.236.170:9000/video/s9kceby5/s9kceby5-321001.m3u8\"}]";
+//
+//        List<UploadUrl> list = GsonUtils.gsonToList(str, UploadUrl.class);
+//
+//        System.out.println(list);
 
-        String substring = str.substring(str.indexOf("password")+9, str.indexOf("roleId")-2);
+//        SubTitleData subTitleData = new SubTitleData();
+//
+//        System.out.println(GsonUtils.toJson(subTitleData));
 
-        System.out.println(substring.equals(""));
+//        http://162.245.236.170:9000/video/s9kceby5/s9kceby5-321001.m3u8"},{480: "http://162.245.236.170:9000/video/s9kceby5/s9kceby5-321001.m3u8
+//        String str = " reqUploadSubtitle: ReqUploadSubtitle(subtitleInfo=你好,subtitleName=[zmk.pw]Frozen.2013.2160p.BluRay.REMUX.HEVC.TrueHD.7.1.Atmos-FGT.中文, subtitleSuffix=srt, filmRandom=8plwhvgu, language=中文)";
+//
+//        String substring = str.substring(str.indexOf("subtitleInfo"), str.indexOf("subtitleName"));
+//
+//        String subtitleInfo = str.replace(substring, "");
+//
+//        System.out.println(substring);
+//
+//        System.out.println(subtitleInfo);
 
-
+        String[] strings = {"qwr","zhy"};
+                System.out.println(GsonUtils.toJson(findWords(strings)));
     }
+    public static String[] findWords(String[] words) {
 
 
+        List<String> list = new ArrayList<>();
+
+        String one = "qwertyuiop";
+        String two = "asdfghjkl";
+        String three = "zxcvbnm";
+
+        for (int i = 0; i < words.length; i++) {
+
+                String str = String.valueOf(words[i].charAt(0)).toLowerCase();
+//            System.out.println(str);
+                if (one.contains(str)){
+                    Integer count = 0;
+                    for (int k = 0; k < words[i].length(); k++) {
+                        if (one.contains(String.valueOf(words[i].charAt(k)).toLowerCase())){
+
+                            count ++;
+                        }else {
+                            break;
+                        }
+                    }
+
+                    if (count == words[i].length()){
+                        list.add(words[i]);
+                    }
+                }else if (two.contains(str)){
+                    Integer count = 0;
+                    for (int k = 0; k < words[i].length(); k++) {
+                        if (two.contains(String.valueOf(words[i].charAt(k)).toLowerCase())){
+
+                            count ++;
+                        }else {
+                            break;
+                        }
+                    }
+                    if (count == words[i].length()){
+                        list.add(words[i]);
+                    }
+                }else if (three.contains(str)){
+                    Integer count = 0;
+                    for (int k = 0; k < words[i].length(); k++) {
+
+                        if (three.contains(String.valueOf(words[i].charAt(k)).toLowerCase())){
+
+                            count ++;
+                        }else {
+                            break;
+                        }
+                    }
+                    if (count == words[i].length()){
+                        list.add(words[i]);
+                    }
+                }
+
+        }
+        String[] strings = new String[list.size()];
+        return list.toArray(strings);
+    }
 
 }
 

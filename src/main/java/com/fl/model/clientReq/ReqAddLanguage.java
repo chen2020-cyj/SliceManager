@@ -6,4 +6,5 @@ import lombok.Data;
 public class ReqAddLanguage {
     private String language;
 
+    private String otherName;
 }

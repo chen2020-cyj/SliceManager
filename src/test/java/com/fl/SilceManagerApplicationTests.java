@@ -2,17 +2,11 @@ package com.fl;
 
 import cn.hutool.core.util.IdUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.fl.entity.FilmInfo;
-import com.fl.entity.Menu;
-import com.fl.entity.RoleInfo;
-import com.fl.entity.TaskManager;
+import com.fl.entity.*;
 import com.fl.model.ChildrenInfo;
 import com.fl.model.PowerInfo;
 import com.fl.model.clientRes.ResData;
-import com.fl.service.FilmInfoService;
-import com.fl.service.MenuService;
-import com.fl.service.RoleInfoService;
-import com.fl.service.TaskManagerService;
+import com.fl.service.*;
 import com.fl.utils.GsonUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.runner.RunWith;
@@ -42,81 +36,46 @@ public class SilceManagerApplicationTests {
     private RoleInfoService roleInfoService;
     @Autowired
     private MenuService menuService;
-
-
+    @Autowired
+    private SubtitleTaskService subtitleTaskService;
+//    @Autowired
+//    pri
 
     @Test
     public void test() {
 
-        List<RoleInfo> list = roleInfoService.selectAll();
 
-        List<ChildrenInfo> infos = new ArrayList<>();
-
-        List<RoleInfo> roleList = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-
-            ChildrenInfo childrenInfo = new ChildrenInfo();
-            if (list.get(i).getPid() == 0){
-                childrenInfo.setId(list.get(i).getId());
-                childrenInfo.setIcon("&#xe63a;");
-                childrenInfo.setRoleName(list.get(i).getName());
-                childrenInfo.setChildren("");
-                childrenInfo.setPower("");
-                roleList.add(list.get(i));
-                infos.add(childrenInfo);
-            }
-        }
-
-        for (int i = 0; i < roleList.size(); i++) {
-            List<ChildrenInfo> list1 = find(roleList.get(i).getId(), infos, list);
-//            System.out.println(GsonUtils.toJson(list1));
-            for (int k = 0; k < list1.size(); k++) {
-                for (int n = 0; n < list.size(); n++) {
-                    if (list1.get(k).getId() == list.get(n).getPid()){
-                        List<ChildrenInfo> list2 = find(list1.get(k).getId(), infos, list);
-                        list1.get(k).setChildren(list2);
-                    }
-                }
-//                if (list.contains(list1.get(k))){
-//                    System.out.println("adadadaadad");
-//                    List<ChildrenInfo> list2 = find(list1.get(k).getId(), infos, list);
-//                    list1.get(k).setChildren(list2);
+//        List<FilmInfo> all = filmInfoService.All();
+//
+//        for (int i = 0; i < all.size(); i++) {
+//            String str = getRandomString(8);
+//
+//            FilmInfo filmInfo = filmInfoService.selectByFilmId(str);
+//
+//            if (filmInfo == null){
+//                all.get(i).setFilmId(str);
+//                all.get(i).setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
+//                filmInfoService.updateByFilmInfoId(all.get(i));
+//            }else {
+//                while (true){
+//                    String randomString = getRandomString(8);
+//
+//                    FilmInfo info = filmInfoService.selectByFilmId(randomString);
+//
+//                    if (info == null){
+//                        all.get(i).setFilmId(str);
+//                        all.get(i).setUpdateTime(String.valueOf(System.currentTimeMillis()/1000));
+//                        filmInfoService.updateByFilmInfoId(all.get(i));
+//
+//                        break;
+//                    }
 //                }
-            }
-            infos.get(i).setChildren(list1);
-        }
+//            }
+////            all.get(i).setFilmId(str);
+//        }
+        SubtitleTask subtitleTask = subtitleTaskService.takeOneTask();
+        System.out.println(subtitleTask);
 
-        for (int i = 0; i < infos.size(); i++) {
-            List<Menu> menuList = menuService.selectByRole(infos.get(i).getId());
-
-            List<PowerInfo> powList = new ArrayList<>();
-            for (int k = 0; k < menuList.size(); k++) {
-                PowerInfo powerInfo = new PowerInfo();
-                if (menuList.get(k).getPid() == 0){
-                    powerInfo.setPowerName(menuList.get(k).getTitle());
-                    powerInfo.setChildren("");
-                    powerInfo.setId(menuList.get(k).getId());
-
-                    powList.add(powerInfo);
-                }
-            }
-            for (int k = 0; k < powList.size(); k++) {
-                List<PowerInfo> dd = dd(powList.get(i).getId(), menuList);
-                if (dd.size() == 0){
-                    powList.get(k).setChildren("");
-                }else {
-                    powList.get(k).setChildren(dd);
-                }
-            }
-            if (powList.size() == 0){
-                infos.get(i).setPower("");
-            }else {
-                infos.get(i).setPower(powList);
-            }
-
-        }
-
-        System.out.println(GsonUtils.toJson(infos));
     }
 
 

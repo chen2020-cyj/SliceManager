@@ -21,11 +21,9 @@ public class VisitUrl {
     private String minioUrl;
 
     /**
-     * 对应片源filmId
+     * 对应对应影片信息随机生成Id
      */
-    private String doubanId;
-
-    private String language;
+    private String filmRandom;
 
     private String createTime;
 

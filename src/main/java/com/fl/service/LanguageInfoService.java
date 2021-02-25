@@ -59,5 +59,14 @@ public class LanguageInfoService extends ServiceImpl<LanguageInfoMapper, Languag
 
         return languageInfoMapper.selectList(wrapper);
     }
+    /**
+     * 根据别名查找语言
+     */
+    public LanguageInfo selectByOtherName(String languageKey){
+        QueryWrapper<LanguageInfo> wrapper = new QueryWrapper<>();
+        wrapper.eq("language_key",languageKey);
+
+        return languageInfoMapper.selectOne(wrapper);
+    }
 
 }
